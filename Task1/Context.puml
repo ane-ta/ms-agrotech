@@ -1,0 +1,26 @@
+@startuml
+title Диаграмма системы АгроТех Х PigSystem
+
+'!include C4.puml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Person(user, "Пользователь", "В зависимости от своей роли\r\nДежурит на ферме, следит за здоровьем животных, следит за оборудованием, пользуется аналитикой")
+
+System_Ext(appUsing, "Mобильное или Web приложение", "Предоставляет интерфейс для работы с PigSystem")
+System_Ext(sysIntegrating, "Интегрирующая система", "Собирает и анализирует интересующие метрики")
+
+System(PigFarmSystem, "Pig System", "автоматизирует свиноводческую ферму")
+
+System_Ext(sysWatching, "Edge-камеры видеонаблюдения", "С встраиванием своей аналитики\r\nРазных производителей")
+System_Ext(sysFeeding, "edge-устройства кормления", "Кормушки и поилки\r\nРазных производителей")
+System_Ext(sysPigBehaviour, "ИИ-модель анализа поведения животных", "Оповещает о событиях в поведении животных в реальном времени")
+
+Rel(user, appUsing, "использует части системы в зависимости от прав доступа")
+
+Rel(appUsing,PigFarmSystem,"Использует API системы Pig System для доступа к ее функциям")
+Rel(sysWatching,sysPigBehaviour,"Использует для анализа поведения животных по видео")
+Rel(PigFarmSystem,sysWatching,"Собирает видео поток и события о поведении и состоянии животных")
+Rel(PigFarmSystem,sysFeeding,"Узнает состояние и управляет устройством кормления")
+PigFarmSystem -right-> sysIntegrating : "Поставляет настраиваемые базовые и специфические метрики"
+
+@enduml
