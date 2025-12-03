@@ -15,7 +15,7 @@ System(PigFarmSystem, "Pig System", "автоматизирует свиново
 
 'external items
 System_Ext(sysWatching, "Edge-камеры видеонаблюдения", "С встраиванием своей аналитики\r\nРазных производителей")
-System_Ext(sysFeeding, "edge-устройства кормления", "Кормушки и поилки\r\nРазных производителей")
+System_Ext(sysFeeding, "Edge-устройства кормления", "Кормушки и поилки\r\nРазных производителей")
 System_Ext(sysPigBehaviour, "ИИ-модель анализа поведения животных", "Оповещает о событиях в поведении животных в реальном времени")
 
 'using relations
