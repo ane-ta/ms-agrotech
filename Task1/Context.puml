@@ -16,7 +16,7 @@ System(PigFarmSystem, "Pig System", "автоматизирует свиново
 'external items
 System_Ext(sysWatching, "Edge-камеры видеонаблюдения", "С встраиванием своей аналитики\r\nРазных производителей")
 System_Ext(sysFeeding, "Edge-устройства кормления", "Кормушки и поилки\r\nРазных производителей")
-System_Ext(sysPigBehaviour, "ИИ-модель анализа поведения животных", "Оповещает о событиях в поведении животных в реальном времени")
+System_Ext(sysPigBehaviour, "ИИ-модель анализа поведения животных", "Генерирует события при анализе поведения животных по видео")
 
 'using relations
 Rel(user, appUsing, "использует части системы в зависимости от прав доступа")
@@ -26,6 +26,6 @@ Rel(sysWatching,sysPigBehaviour,"Использует для анализа по
 ' in use relations
 Rel(PigFarmSystem,sysWatching,"Собирает видео поток и события о поведении и состоянии животных")
 Rel(PigFarmSystem,sysFeeding,"Узнает состояние и управляет устройством кормления")
-PigFarmSystem -right-> sysIntegrating : "Поставляет настраиваемые базовые и специфические метрики"
+Rel_Right(PigFarmSystem, sysIntegrating, "Поставляет настраиваемые базовые и специфические метрики")
 
 @enduml
