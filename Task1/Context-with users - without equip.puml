@@ -1,0 +1,41 @@
+@startuml
+title Диаграмма системы АгроТех Х PigSystem
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+System(users, "Пользователи и роли", "Используют части системы в зависимости от занимаемой должности")
+
+Container_Boundary(users, "Пользователи и роли"){
+
+    'using items
+    Person(userDir, "Директор хозяйства", "Может работать вне фермы. Пользуется статистикой и аналитикой для управления хозяйством")
+    Person(userOnDuty, "Дежурный", "Работает на ферме, исполняет протоколы дежурства, реагирует на события")
+    Person(userVet, "Ветеринар", "Работает на ферме, следит за здоровьем животных")
+    Person(userMech, "Механик", "Работает на ферме, следит за состоянием оборудования")
+
+    Person(userAdmin, "Administrator", "Администрирует систему")
+}
+
+System_Ext(appUsing, "Mобильное или Web приложение", "Предоставляет интерфейс для работы с PigSystem")
+System_Ext(sysIntegrating, "Интегрирующая система", "Собирает и анализирует интересующие метрики")
+
+'system itself
+System(PigFarmSystem, "Pig System", "автоматизирует свиноводческую ферму")
+
+'external items
+
+'using relations
+Rel_Down(userDir, appUsing, "Просматривает статистику и аналитику по деятельности фермы")
+Rel_Down(userOnDuty, appUsing, "Просматривает информацию о состоянием фермы,\r\nуправляет устройствами кормления,\r\nполучает оповещения о событиях\r\nотчитывается о предпринятых действиях\r\n")
+Rel_Down(userVet, appUsing, "Просматривает информацию о состоянии и здоровье животных,\r\nполучает оповещения о событиях,\r\nотчитывается о предпринятых действиях\r\n")
+Rel_Down(userMech, appUsing, "Просматривает информацию о состоянии оборудования,\r\nполучает оповещения о событиях, отчитывает о предпринятых действиях\r\n")
+
+Rel_Down(userAdmin, PigFarmSystem, "Администрирует систему, аккаунты пользователей и их доступы")
+
+Rel_Down(appUsing,PigFarmSystem,"Использует API системы Pig System для доступа к ее функциям в зависимости от прав доступа")
+
+' in use relations
+
+Rel_Right(PigFarmSystem, sysIntegrating, "Поставляет настраиваемые базовые и специфические метрики")
+
+@enduml
