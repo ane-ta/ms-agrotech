@@ -1,0 +1,45 @@
+@startuml
+title Диаграмма системы АгроТех Х PigSystem
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+'using entities
+System(users, "Роли", "Используют части системы в зависимости от должностных обязанностей и уровня допуска")
+Container_Boundary(users, "Пользователи и роли"){
+
+    Person(userDir, "Руководство", "Принимает решения по управлению хозяйством")
+    Person(userOnDuty, "Дежурный", "Исполняет протоколы дежурства на конкретной ферме")
+    Person(userVet, "Ветеринар", "Следит за здоровьем животных на фермах")
+    Person(userMech, "Инженер/Механик", "Следит за состоянием оборудования на фермах")
+}
+
+'external items
+System_Ext(appUsing, "Пользовательский интерфейс", "Mобильное или Web приложение для использования PigSystem")
+System_Ext(sysIntegrating, "Интегрирующие системы", "Обрабатывают интересующие метрики")
+
+'system itself
+System(PigFarmSystem, "Pig System", "Автоматизирует управление свиноводческими фермами хозяйства")
+ 
+ 'items in use
+ System(farms, "Территория ферм хозяйства", "")
+ Container_Boundary(farms, ""){
+    Container(video, "Видео мониторинг", "", "Камеры + ИИ по территории фермы")
+    Container(feeding, "Автоматизированные устройства кормления", "", "Авто-поилки и авто-кромушки")
+ }
+
+
+'using relations
+Rel_Down(userDir, appUsing, "Просматривает статистику и аналитику по деятельности ферм")
+Rel_Down(userOnDuty, appUsing, "Следит за кормлением животных и их поведением")
+Rel_Down(userVet, appUsing, "Следит за поголовьем и здоровьем животных")
+Rel_Down(userMech, appUsing, "Следит за состоянием оборудования")
+
+Rel_Down(appUsing,PigFarmSystem,"Использует функции системы в зависимости от прав доступа пользователя")
+
+Rel_Right(PigFarmSystem, sysIntegrating, "Поставляет настраиваемые базовые и специфические метрики")
+
+'in use relations
+Rel_Down(PigFarmSystem, video,"Взаимодействует")
+Rel_Down(PigFarmSystem, feeding,"Взаимодействует")
+
+@enduml
