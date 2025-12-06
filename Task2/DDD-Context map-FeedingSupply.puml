@@ -1,0 +1,35 @@
+@startuml
+title Диаграмма контейнеров системы АгроТех Х PigSystem
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+    Person(userEngineer, "Снабжение")
+
+    System(dPigs, "Домен: Уход за животными", " ")
+    System_Boundary(dPigs, ""){ 
+
+        System(dPigState, "Поддомен: Присмотр за животными", " ")
+        System_Boundary(dPigState, ""){ 
+            System( sysPigsState, "Контекст: Мониторинг состояния животных", "Пересчет особей, признаки болезни")
+        }
+
+        System(dPigFeeding, "Поддомен: Кормление животных", " ")
+        System_Boundary(dPigFeeding, ""){ 
+            System( sysFeedingEquipment, "Контекст: Автоматизация кормления", "Работа с поилками и кормушками. График кормления.")    
+            
+            System(dPigFeedingSupply, "Снабжение кормом", " ")
+            System_Boundary(dPigFeedingSupply, ""){ 
+                System( sysFeedingResources, "Контекст: Мониторинг запасов", "Отслеживание запасов корма итд")    
+                System( sysFeedingForecast, "Контекст: Прогнозирование запасов", "Рассчет необходимого количества корма в зависимости от графика кормления и поголовья стада")    
+            
+            }        
+        }
+    }
+
+    Rel(sysFeedingForecast, sysFeedingEquipment,"Получает информацию о графиках кормления и размере порции")
+    Rel(sysFeedingForecast, sysPigsState,"Получает информацию о поголовье животных")
+
+    Rel(userEngineer, sysFeedingForecast,"Использует")
+    Rel(userEngineer, sysFeedingResources,"Использует")
+
+@enduml
