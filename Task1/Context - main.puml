@@ -11,6 +11,7 @@ Container_Boundary(users, "Пользователи и роли"){
     Person(userOnDuty, "Дежурный", "Исполняет протоколы дежурства на конкретной ферме")
     Person(userVet, "Ветеринар", "Следит за здоровьем животных на фермах")
     Person(userMech, "Инженер/Механик", "Следит за состоянием оборудования на фермах")
+    Person(userSupply, "Снабжение", "Обеспечивает запас корма")
 }
 
 'external items
@@ -23,7 +24,7 @@ System(PigFarmSystem, "Pig System", "Автоматизирует управле
  'items in use
  System(farms, "Территория ферм хозяйства", "")
  Container_Boundary(farms, ""){
-    Container(video, "Видео мониторинг", "", "Камеры + ИИ по территории фермы")
+    Container(video, "Видео мониторинг", "", "Камеры + ИИ")
     Container(feeding, "Автоматизированные устройства кормления", "", "Авто-поилки и авто-кромушки")
  }
 
@@ -33,6 +34,7 @@ Rel_Down(userDir, appUsing, "Просматривает статистику и 
 Rel_Down(userOnDuty, appUsing, "Следит за кормлением животных и их поведением")
 Rel_Down(userVet, appUsing, "Следит за поголовьем и здоровьем животных")
 Rel_Down(userMech, appUsing, "Следит за состоянием оборудования")
+Rel_Down(userSupply, appUsing, "Ведет учет запасов корма")
 
 Rel_Down(appUsing,PigFarmSystem,"Использует функции системы в зависимости от прав доступа пользователя")
 
