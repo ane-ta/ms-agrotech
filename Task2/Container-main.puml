@@ -1,0 +1,45 @@
+@startuml
+title Диаграмма контейнеров системы АгроТех Х PigSystem
+
+'!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+!include ../C4_Component.puml
+
+'external items
+System_Ext(appUsing, "Пользовательский интерфейс", "Mобильное или Web приложение для использования PigSystem")
+System_Ext(sysIntegrating, "Цифровая платформа AgroTech", "Обрабатывает интересующие метрики")
+
+System(backCenter, "Центральный сервер"," ")
+Container_Boundary(backCenter, "") {
+
+    Container(cntAPIGateway, "API Gateway", "", "Валидирует токены доступа\nМаршрутизирует запросы")
+    Container(cntIdP, "Identity Provider", "Keycloak", "Управляет аккаунтами пользователей и их правами доступа\n\nПроводит через аутентификацию")
+
+'    Container(cntAgentEquipment, "Сервис мониторинга оборудования", "", "Мониторит состояние устройств автоматизации\r\nСверяет с ожидаемым")
+'    Container(cntAgentIOT, "IOT шлюз", "", "Поставляет события с Edge-устройств\r\nТранслирует команды Edge-устройствам") 
+ }  
+
+
+System(backFarm1, "Серверы-агенты на ферме","Взаимодействие с полевым оборудованием")
+Container_Boundary(backFarm1, "") {
+
+    Container(cntAgentEquipment, "Сервис мониторинга оборудования", "", "Мониторит состояние устройств автоматизации\r\nСверяет с ожидаемым")
+    Container(cntAgentIOT, "IOT шлюз", "", "Поставляет события с Edge-устройств\r\nТранслирует команды Edge-устройствам") 
+ }  
+
+System(backFarm0, "Территория фермы","Edge-устройства автоматизации")
+Container_Boundary(backFarm0, "") {
+
+    Container(cntCamera, "Видеокамера", "", "")
+    Container(cntWhater, "Авто-поилка", "", "") 
+    Container(cntFeeding, "Авто-кормушка", "", "") 
+ }  
+
+Rel(cntAgentIOT, cntCamera, "")
+'Rel(cntAgentIOT, cntWhater, "")
+'Rel(cntAgentIOT, cntFeeding, "")
+
+Rel(appUsing, cntAPIGateway, "Использует функции системы в зависимости от прав доступа пользователей")
+Rel(appUsing, cntIdP, "Аутентифицируется и получает JWT-токен доступа.")
+Rel_Left(backCenter, sysIntegrating, "Публикует настраиваемый список метрик")
+
+@enduml

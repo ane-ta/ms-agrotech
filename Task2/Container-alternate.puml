@@ -1,0 +1,18 @@
+
+@startuml
+title Альтернативная диаграмма контейнеров системы АгроТех Х PigSystem
+
+'!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+!include ../C4_Component.puml
+
+System_Ext(cntIdP, "Identity Provider", "Управляет аккаунтами пользователей и их правами доступа\n\nПроводит через аутентификацию")
+
+System(backCenter, "Центральный сервер"," ")
+Container_Boundary(backCenter, "") {
+    
+}
+
+Rel(appUsing, cntIdP, "Аутентифицируется и получает JWT-токен доступа.")
+
+
+@enduml
