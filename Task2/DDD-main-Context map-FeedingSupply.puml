@@ -1,5 +1,5 @@
 @startuml
-title Диаграмма контейнеров системы АгроТех Х PigSystem
+title DDD Карта взаимодействия контекстов поддомена "Кормление животных"
 
 !includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
 

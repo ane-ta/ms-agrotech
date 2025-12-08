@@ -1,5 +1,5 @@
 @startuml
-title Контекстная карта системы АгроТех Х PigSystem
+title DDD Карта взаимодействия контекстов автоматизации PigSystem
 
 !includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
 
@@ -10,7 +10,7 @@ title Контекстная карта системы АгроТех Х PigSyst
        
         System(dEquipmentKnowledge, "Поддомен: Учет полевого оборудования", "")
         System_Boundary(dEquipmentKnowledge, ""){                
-            System( sysEquipmentList, "Контекст: Ведение полевой карты", "Поддерживать список полевого оборудования системы, его расположение на территории, его тип интеграции")    
+            System( sysEquipmentList, "Контекст: Ведение полевой карты", "Поддерживать список полевого оборудования системы, его расположение на территории, его схему интеграции")    
             System( sysEquipmentState, "Контекст: Мониторинг состояния полевого оборудования", "Отслеживать техническое состояние и сигнал связи")    
         }
 
@@ -39,7 +39,7 @@ title Контекстная карта системы АгроТех Х PigSyst
     }
 
     Rel(sysEdgeData, sysEdgeGateway,"Ловит сообщения специфические для модели edge-устройства")
-    Rel(sysEquipmentState, sysEdgeData,"Собирает стандартизованные сообщения и техническом состоянии устройств")
+    Rel(sysEquipmentState, sysEdgeData,"Собирает стандартизованные сообщения о техническом состоянии устройств")
     Rel(sysPigsBehaviour, sysEdgeData,"Собирает стандартизованные сообщения о событиях видеомониторинга")
     Rel(sysPigsState, sysEdgeData,"Собирает стандартизованные сообщения о событиях видеомониторинга")
     Rel(sysFeedingEquipment, sysEdgeData,"Собирает стандартизованные сообщения об операционных событиях и состоянии авто-поилок и авто-кормушек")
@@ -50,11 +50,12 @@ title Контекстная карта системы АгроТех Х PigSyst
     Rel(userEngineer, sysEquipmentState, "Использует")
     Rel(userVet, sysPigsState, "Использует")
 
-    Rel(sysEquipmentState,sysEquipmentList,"узнает тип и местоположение устройства")
     Rel(sysEdgeData,sysEquipmentList,"узнает тип и местоположение устройства")
-    Rel(sysPigsBehaviour,sysEquipmentList,"узнает тип и местоположение устройства")
-    Rel(sysPigsState,sysEquipmentList,"узнает тип и местоположение устройства")
-    Rel(sysFeedingEquipment,sysEquipmentList,"узнает тип и местоположение устройства")
+
+'    Rel(sysEquipmentState,sysEquipmentList,"узнает тип и местоположение устройства")
+'    Rel(sysPigsBehaviour,sysEquipmentList,"узнает тип и местоположение устройства")
+'    Rel(sysPigsState,sysEquipmentList,"узнает тип и местоположение устройства")
+'    Rel(sysFeedingEquipment,sysEquipmentList,"узнает тип и местоположение устройства")
 
 
 @enduml
