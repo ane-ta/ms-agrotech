@@ -1,0 +1,253 @@
+@startuml
+title Диаграмма контейнеров оперативного управление фермой в системе АгроТех Х PigSystem
+
+'!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+!include ../C4_Component.puml
+
+System(backFarm1, "Сервер-агент на ферме","Взаимодействие с полевым оборудованием")
+Container_Boundary(backFarm1, "") {
+
+    'Поддержание целостности
+    System(backIntegrity, "Поддержание целостности","")
+    Container_Boundary(backIntegrity, "") {
+    
+        Container(cntIntegrityStore, "Сервис сохранения событий системы", "", "Сохраняет историю событий всей системы")
+        Container(cntIntegrityIntegration, "Сервис интеграции", "", "Передает метрики в интегрирующие системы. Управляет списком метрик") 
+        Container(cntIntegrityPing, "Сервис мониторинга связи с серверами-агентами", "", "Передает метрики в интегрирующие системы. Управляет списком метрик") 
+
+        Container(cntIntegritySync, "Сервис синхронизации сервера-агента", "", "Транслирует сообщения между центральной щиной и локальной шиной сообщений") 
+
+        Container(cntIntegrityBroker, "Шина сообщений", "", "") {
+            Component_Ext(cmpIntegrityAll, "Все сообщения")
+            Component_Ext(cmpIntegrityCenter, "Все сообщения центра")
+            Component(cmpIntegrityFarm, "Все сообщения с фермы")
+            Component_Ext(cmpIntegrityIntegration, "Метрики для интеграция")
+            Component(cmpIntegrityPing, "Агент на связи")
+        }
+
+
+    }
+    Rel_Up(cmpIntegrityAll,cntIntegrityStore,"Подписан")
+    
+    Rel_Up(cntIntegritySync,cmpIntegrityPing,"Публикует")
+    Rel_Up(cmpIntegrityPing,cntIntegrityPing,"Подписан")
+
+    Rel_Up(cmpIntegrityIntegration,cntIntegrityIntegration,"Подписан")
+
+    Rel_Up(cntIntegritySync,cmpIntegrityFarm,"Публикует")
+    Rel(cmpIntegrityCenter,cntIntegritySync,"Подписан")
+'    Rel(,,"Подписан")
+    'Взаимодействие с пользователями
+    System(backManagement, "Взаимодействие с пользователями","")
+    Container_Boundary(backManagement, "") {
+    
+        Container(cntAgentManagementUsers, "Сервис управления аккаунтами пользователей", "", "Настройки и доступы")
+        Container(cntAgentNotification, "Сервис оповещения", "", "Оповещает пользователей о важных событиях") 
+
+        Container(cntAgentManagementBroker, "Шина сообщений", "", "") {
+            Component_Ext(cmpAgentNotification, "Оповещения\nпользователям")
+            Component(cmpAgentManagementUsers, "Изменения в аккаунтах пользователей")
+        }
+
+        Container_Ext(extAgentNotificationFeeding, "Сервис автоматизации кормления")
+        Container_Ext(extAgentNotificationEquipMonitoring, "Сервис мониторинга оборудовния")
+        Container_Ext(extAgentNotificationPigsBehaviour, "Сервис мониторинга поведения животных")
+        Container_Ext(extAgentNotificationPigsState, "Сервис мониторинга состояния животных")
+
+    }
+
+    Rel(cntAgentManagementUsers,cmpAgentManagementUsers, "Публикует")
+    Rel(cmpAgentManagementUsers,cntAgentNotification, "Подписан")
+
+    Rel_Up(extAgentNotificationFeeding,cmpAgentNotification, "Публикует значимые события автоматизации кормления")
+    
+    Rel_Up(extAgentNotificationEquipMonitoring,cmpAgentNotification, "Публикует значимые события мониторинга оборудования")
+    
+    Rel_Up(extAgentNotificationPigsState,cmpAgentNotification, "Публикует значимые события о состоянии животных")
+    
+    Rel_Up(extAgentNotificationPigsBehaviour,cmpAgentNotification, "Публикует значимые события о поведении животных")
+    
+    Rel_Up(cmpAgentNotification,cntAgentNotification, "Подписан")
+    'Присмотр за животными
+    System(backPigsState, "Присмотр за животными","")
+    Container_Boundary(backPigsState, "") {
+
+        Container(cntAgentPigsBehaviour, "Сервис мониторинга поведения животных", "", "Признаки беспокойства, гибель, задавливание поросят и т д")
+        Container(cntAgentPigsState, "Сервис мониторинга состояния животных", "", "Пересчет особей, здоровых и с признаками болезни и т д")
+        
+        Container(cntAgentBrokerPigsState, "Шина сообщений", "", "") {
+            Component(cmpPigsStateNotification, "Оповещения\nпользователям")
+            Component(cmpPigsStateCount, "Текущее поголовье")
+            Component_Ext(cmpPigsStateData, "Стандартизованные события\nо состоянии животных\nот оборудования")
+            Component_Ext(cmpPigsBehaviourData, "Стандартизованные события\nо поведении животных\nот оборудования")
+        }
+        
+        Container_Ext(extPigsStateNotification, "Сервис оповещения")
+        Container_Ext(extPigsStateAdapters, "Сервисы-адаптеры устройств")
+        Container_Ext(extPigsStateForecast, "Сервис прогнозирования запасов корма")
+    }
+    Rel(cntAgentPigsState,cmpPigsStateCount,"Публикует")
+    Rel(cmpPigsStateCount,extPigsStateForecast,"Подписан")
+
+    Rel(cntAgentPigsBehaviour,cmpPigsStateNotification, "Публикует значимые события о поведении животных")
+    Rel(cntAgentPigsState,cmpPigsStateNotification, "Публикует значимые события о состоянии животных")
+    Rel(cmpPigsStateNotification,extPigsStateNotification, "Подписан")
+    
+    Rel_Up(extPigsStateAdapters,cmpPigsStateData, "Публикует")
+    Rel_Up(extPigsStateAdapters,cmpPigsBehaviourData, "Публикует")
+    Rel(cmpPigsBehaviourData,cntAgentPigsBehaviour, "Подписан")
+    Rel(cmpPigsStateData,cntAgentPigsState, "Подписан")
+
+    'Снабжение кормом
+    System(backSupply, "Снабжение кормом","")
+    Container_Boundary(backSupply, "") {
+        
+        Container(cntAgentSupplyState, "Сервис мониторинга запасов корма", "", "Отслеживание запасов корма")        
+        Container(cntAgentSupplyForecast, "Сервис прогнозирования запасов корма", "", "Расчет необходимого количества корма в зависимости от графика кормления и поголовья скота")        
+
+        Container(cntAgentBrokerSupply, "Шина сообщений", "", "") {
+            Component(cmpAgentSupplyForecastResponse, "Прогноз расходов запасов")
+            Component(cmpAgentSupplyNotification, "Оповещения\nпользователям")
+            Component_Ext(cmpAgentSupplyFeedingSpent, "Скормлено за день")
+            Component_Ext(cmpAgentSupplyFeedingSize, "Нормы кормления")
+            Component_Ext(cmpAgentSupplyPigsCount, "Текущее поголовье")
+        }
+
+        Container_Ext(extSupplyNotification, "Сервис оповещения")
+        Container_Ext(extSupplyFeeding, "Сервис автоматизации кормления")
+        Container_Ext(extSupplyPigsState, "Сервис мониторинга состояния животных")
+    }
+    Rel(cntAgentSupplyForecast,cmpAgentSupplyForecastResponse,"Публикует")
+    Rel_Up(cmpAgentSupplyForecastResponse,cntAgentSupplyState,"Подписан")
+    
+    Rel_Up(extSupplyPigsState,cmpAgentSupplyPigsCount,"Публикует")
+    Rel(cmpAgentSupplyPigsCount,cntAgentSupplyForecast,"Подписан")
+
+    Rel_Down(cntAgentSupplyState, cmpAgentSupplyNotification, "Публикует значимые события уровня запасов корма")
+    Rel_Down(cmpAgentSupplyNotification,extSupplyNotification,"Подписан")
+    
+    Rel_Up(cmpAgentSupplyFeedingSpent,cntAgentSupplyState,"Подписан")
+    Rel_Up(extSupplyFeeding,cmpAgentSupplyFeedingSpent, "Публикует")
+
+    Rel_Up(cmpAgentSupplyFeedingSize,cntAgentSupplyForecast,"Подписан")
+    Rel_Up(extSupplyFeeding,cmpAgentSupplyFeedingSize,"Публикует")
+
+    'Кормление животных
+    System(backPigs, "Кормление животных","")
+    Container_Boundary(backPigs, "") {
+
+        Container(cntAgentPigsFeeding, "Сервис автоматизации кормления", "", "Работа с поилками и кормушками. График кормления")
+
+        Container(cntAgentBrokerPigs, "Шина сообщений", "", "") {
+            Component(cmpPigsFeedingNotification, "Оповещения\nпользователям")
+            Component(cmpPigsFeedingCmd, "Стандартизованные команды оборудования")
+            Component(cmpPigsFeedingSettings, "Нормы кормления")
+            Component(cmpPigsFeedingSpent, "Скормлено за день")
+            Component_Ext(cmpPigsFeedingData, "Стандартизованные события\nавтоматизации кормления\nот оборудования")
+        }
+
+        Container_Ext(extPigsNotification, "Сервис оповещения")
+        Container_Ext(extPigsAdapters, "Сервисы-адаптеры устройств")
+        Container_Ext(extPigsForecast, "Сервис прогнозирования запасов корма")
+        Container_Ext(extPigsMonitor, "Сервис мониторинга запасов корма")
+    }   
+    Rel_Down(cntAgentPigsFeeding,cmpPigsFeedingNotification, "Публикует значимые события в автоматизированном кормлении")
+    Rel_Down(cmpPigsFeedingNotification,extPigsNotification, "Подписан")
+    
+    Rel(cntAgentPigsFeeding,cmpPigsFeedingSettings, "Публикует")
+    Rel_Down(cmpPigsFeedingSettings,extPigsForecast, "Подписан")
+    
+    Rel(cntAgentPigsFeeding,cmpPigsFeedingSpent, "Публикует")
+    Rel_Down(cmpPigsFeedingSpent,extPigsMonitor, "Подписан")
+    
+    Rel(cntAgentPigsFeeding,cmpPigsFeedingCmd, "Публикует")
+    Rel_Down(cmpPigsFeedingCmd,extPigsAdapters, "Подписан")
+    
+    Rel_Up(extPigsAdapters,cmpPigsFeedingData, "Публикует")
+    Rel(cmpPigsFeedingData,cntAgentPigsFeeding, "Подписан")
+
+    'Учет полевого оборудования
+    System(backEquipment, "Учет полевого оборудования","")
+    Container_Boundary(backEquipment, "") {
+    
+        Container(cntEquipMonitoring, "Сервис мониторинга оборудования", "", "Отслеживает техническое состояние и сигнал связи") 
+        Container(cntEquipMap, "Сервис ведения полевой карты", "", "Ведет список полевого оборудования , его расположение на территории, его тип интеграции") 
+
+        Container(cntAgentBrokerEquipment, "Шина сообщений", "", "") {
+
+            Component(cmpEquipMonitoringNotification, "Оповещения\nпользователям")
+            Component(cmpEquipType, "События\nоб изменении списка устройств и их типов")
+            Component(cmpEquipPlace, "События\nоб изменении списка устройств и их расположения")
+            Component_Ext(cmpEquipStandartData2, "Стандартизованные технические события от оборудования")
+        }
+        Container_Ext(extEquipMonitoringNotification, "Сервис оповещения")
+        Container_Ext(extEquipmentAdapters, "Сервисы-адаптеры устройств")
+    }
+
+    Rel_Down(cntEquipMap,cmpEquipType, "Публикует")
+    Rel(cntEquipMap,cmpEquipPlace, "Публикует")
+
+    Rel_Up(cmpEquipPlace,cntEquipMonitoring, "Подписан")
+    Rel_Down(cntEquipMonitoring,cmpEquipMonitoringNotification, "Публикует значимые события на оборудовании")
+
+    Rel_Down(cmpEquipMonitoringNotification,extEquipMonitoringNotification, "Подписан")
+    Rel_Down(cmpEquipType,extEquipmentAdapters, "Подписан")
+
+    Rel_Up(cmpEquipStandartData2,cntEquipMonitoring, "Подписан")
+    Rel_Up(extEquipmentAdapters,cmpEquipStandartData2,"Публикует")
+
+    'Взаимодействие с полевым оборудованием
+    System(backEquipmentUsing, "Взаимодействие с полевым оборудованием","")
+    Container_Boundary(backEquipmentUsing, "") {
+
+        System_Ext(extEquipmentUsingEquipMap, "Сервис ведения полевой карты")
+        System_Ext(extEquipmentUsingFeeding, "Сервис автоматизации кормления")
+        System_Ext(extEquipmentUsingEquipMonitor, "Сервис мониторинга оборудования")
+        System_Ext(extEquipmentUsingPigState, "Сервис мониторинга состояния животных")
+        System_Ext(extEquipmentUsingPigSBehaviour, "Сервис мониторинга поведения животных")
+
+        Container(cntAgentBrokerEquipmentUsing, "Шина сообщений", "", "") {
+
+            Component(cmpEquipSpecificData, "События\ncпецифические для оборудования")
+            Component(cmpEquipSpecificCmd, "Команды\nспецифические для оборудования")
+
+            Component(cmpEquipStandardDataEquipment, "Стандартизованные технические события\nот оборудования")
+            Component(cmpEquipStandardDataFeeding, "Стандартизованные события\nавтоматизации кормления\nот оборудования")
+            Component(cmpEquipStandardDataPigsState, "Стандартизованные события\nо состоянии животных\nот оборудования")
+            Component(cmpEquipStandardDataPigsBehaviour, "Стандартизованные события\nо поведении животных\nот оборудования")
+
+            Component_Ext(cmpEquipStandardCmd, "Стандартизованные команды\nоборудованию")
+            Component_Ext(cmpEquipType2, "События\nоб изменении списка устройств и их типов")
+        }
+        Container(cntAgentEquipmentAdapter, "Сервисы-адаптеры устройств", "", "Перводчик со стандартных для PigSystem сообщений и команд к специфическим для производителя устройства и обратно")
+
+        Container(cntAgentEdgeGateway, "IOT Шлюз", "", "Транслирует обмен сообщений с Edge-устройствами в локальный брокер сообщений") 
+    } 
+    
+    Rel_Down(cntAgentEquipmentAdapter,cmpEquipStandardDataEquipment, "Публикует")
+    Rel_Down(cntAgentEquipmentAdapter,cmpEquipStandardDataFeeding, "Публикует")
+    Rel_Down(cntAgentEquipmentAdapter,cmpEquipStandardDataPigsState, "Публикует")
+    Rel_Down(cntAgentEquipmentAdapter,cmpEquipStandardDataPigsBehaviour, "Публикует")
+    
+    Rel_Down(cmpEquipStandardDataEquipment,extEquipmentUsingEquipMonitor, "Подписан")
+    Rel(cmpEquipStandardDataFeeding,extEquipmentUsingFeeding, "Подписан")
+    Rel(cmpEquipStandardDataPigsState,extEquipmentUsingPigState, "Подписан")
+    Rel(cmpEquipStandardDataPigsBehaviour,extEquipmentUsingPigSBehaviour, "Подписан")
+
+    Rel_Up(extEquipmentUsingFeeding,cmpEquipStandardCmd, "Публикует")
+    Rel(cmpEquipStandardCmd,cntAgentEquipmentAdapter, "Подписан")
+
+    Rel(cmpEquipSpecificData,cntAgentEquipmentAdapter, "Подписан")
+    Rel(cntAgentEquipmentAdapter,cmpEquipSpecificCmd, "Публикует")
+
+    Rel_Up(extEquipmentUsingEquipMap,cmpEquipType2, "Публикует")    
+    Rel_Up(cmpEquipType2,cntAgentEquipmentAdapter, "Подписан")
+
+    Rel_Down(cntAgentEdgeGateway,cmpEquipSpecificData, "Публикует")
+    Rel(cmpEquipSpecificCmd,cntAgentEdgeGateway, "Подписан")
+}
+
+'Lay_Right(cntAgentBrokerEquipment,cntAgentBrokerEquipmentUsing)
+'Lay_Right(cntAgentBrokerEquipmentUsing,cntAgentManagementBroker)
+
+@enduml
