@@ -25,9 +25,14 @@ title DDD Карта взаимодействия контекстов подд�
             }        
         }
     }
+    Lay_Right(sysFeedingResources, sysFeedingForecast)
 
     Rel(sysFeedingForecast, sysFeedingEquipment,"Получает информацию о графиках кормления и размере порции")
     Rel(sysFeedingForecast, sysPigsState,"Получает информацию о поголовье животных")
+
+    Rel(sysFeedingResources, sysFeedingEquipment,"Получает информацию о прошедших кормлениях")
+
+    Rel_Right(sysFeedingResources, sysFeedingForecast, "Получает информацию о необходимом на данный момент запасе корма")
 
     Rel(userEngineer, sysFeedingForecast,"Использует")
     Rel(userEngineer, sysFeedingResources,"Использует")
