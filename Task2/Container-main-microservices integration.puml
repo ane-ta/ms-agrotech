@@ -1,33 +1,46 @@
 @startuml
-title Диаграмма контейнеров оперативного управление фермой в системе АгроТех Х PigSystem
+title Диаграмма микросервисов и их взаимодействия в системе АгроТех Х PigSystem
 
 '!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
 !include ../C4_Component.puml
 
-System(backFarm1, "Сервер-агент на ферме","Взаимодействие с полевым оборудованием")
-Container_Boundary(backFarm1, "") {
+Person(userAll, "Все", "Дежурный, Ветеринар, Инженер/механик, Снабжение")
+
+Person(userSupply, "Снабжение", "Обеспечивает запас корма")
+Person(userOnDuty, "Дежурный", "Исполняет протоколы дежурства на конкретной ферме")
+Person(userVet, "Ветеринар", "Следит за здоровьем животных на фермах")
+Person(userMech, "Инженер/Механик", "Следит за состоянием оборудования на фермах")
 
     'Поддержание целостности
     System(backIntegrity, "Поддержание целостности","")
     Container_Boundary(backIntegrity, "") {
     
-        Container(cntIntegrityStore, "Сервис сохранения событий системы", "", "Сохраняет историю событий всей системы")
-        Container(cntIntegrityIntegration, "Сервис интеграции", "", "Передает метрики в интегрирующие системы. Управляет списком метрик") 
-        Container(cntIntegrityPing, "Сервис мониторинга связи с серверами-агентами", "", "Передает метрики в интегрирующие системы. Управляет списком метрик") 
-
-        Container(cntIntegritySync, "Сервис синхронизации сервера-агента", "", "Транслирует сообщения между центральной щиной и локальной шиной сообщений") 
+        System(backIntegrityCenter, "Центр","")
+        Container_Boundary(backIntegrityCenter, "") {
+            Container(cntIntegrityStore, "Сервис сохранения событий системы", "", "Сохраняет историю событий всей системы")
+            Container(cntIntegrityIntegration, "Сервис интеграции", "", "Передает метрики в интегрирующие системы. Управляет списком метрик") 
+            Container(cntIntegrityPing, "Сервис мониторинга связи с серверами-агентами", "", "Передает метрики в интегрирующие системы. Управляет списком метрик") 
+        }
 
         Container(cntIntegrityBroker, "Шина сообщений", "", "") {
-            Component_Ext(cmpIntegrityAll, "Все сообщения")
             Component_Ext(cmpIntegrityCenter, "Все сообщения центра")
             Component(cmpIntegrityFarm, "Все сообщения с фермы")
             Component_Ext(cmpIntegrityIntegration, "Метрики для интеграция")
             Component(cmpIntegrityPing, "Агент на связи")
+            Component(cmpIntegrityNotification, "Оповещение пользователям")
         }
 
+        System(backIntegrityFarm, "Ферма","")
+        Container_Boundary(backIntegrityFarm, "") {
+            Container(cntIntegritySync, "Сервис синхронизации сервера-агента", "", "Транслирует сообщения между центральной щиной и локальной шиной сообщений") 
+        }
+
+        Container_Ext(extIntegrityNotification, "Сервис оповещения пользователей")
 
     }
-    Rel_Up(cmpIntegrityAll,cntIntegrityStore,"Подписан")
+
+    Rel_Up(cmpIntegrityCenter,cntIntegrityStore,"Подписан")
+    Rel_Up(cmpIntegrityFarm,cntIntegrityStore,"Подписан")
     
     Rel_Up(cntIntegritySync,cmpIntegrityPing,"Публикует")
     Rel_Up(cmpIntegrityPing,cntIntegrityPing,"Подписан")
@@ -36,13 +49,25 @@ Container_Boundary(backFarm1, "") {
 
     Rel_Up(cntIntegritySync,cmpIntegrityFarm,"Публикует")
     Rel(cmpIntegrityCenter,cntIntegritySync,"Подписан")
+
+    Rel_Up(cntIntegritySync,cmpIntegrityNotification,"Публикует события изменения связи")
+    Rel_Down(cmpIntegrityNotification,extIntegrityNotification,"Подписан")
+
 '    Rel(,,"Подписан")
     'Взаимодействие с пользователями
     System(backManagement, "Взаимодействие с пользователями","")
     Container_Boundary(backManagement, "") {
-    
-        Container(cntAgentManagementUsers, "Сервис управления аккаунтами пользователей", "", "Настройки и доступы")
-        Container(cntAgentNotification, "Сервис оповещения", "", "Оповещает пользователей о важных событиях") 
+        
+        System(backManagementCenter, "Центр","")
+        Container_Boundary(backManagementCenter, "") {
+            Container(cntAgentManagementUsers, "Сервис управления аккаунтами пользователей", "", "Настройки и доступы")
+        }
+        
+        System(backManagementFarm, "Ферма","")
+        Container_Boundary(backManagementFarm, "") {
+            Container(cntAgentNotification, "Сервис оповещения", "", "Оповещает пользователей о важных событиях") 
+            Container(cntAgentMonitorUsers, "Сервис мониторинга аккаунтов пользователя", "", "Предоставляет актуальный список пользователей и их настроек на ферме") 
+        }
 
         Container(cntAgentManagementBroker, "Шина сообщений", "", "") {
             Component_Ext(cmpAgentNotification, "Оповещения\nпользователям")
@@ -53,21 +78,21 @@ Container_Boundary(backFarm1, "") {
         Container_Ext(extAgentNotificationEquipMonitoring, "Сервис мониторинга оборудовния")
         Container_Ext(extAgentNotificationPigsBehaviour, "Сервис мониторинга поведения животных")
         Container_Ext(extAgentNotificationPigsState, "Сервис мониторинга состояния животных")
-
+        Container_Ext(extAgentNotificationPing, "Сервис синхронизации сервера-агента")
     }
 
     Rel(cntAgentManagementUsers,cmpAgentManagementUsers, "Публикует")
-    Rel(cmpAgentManagementUsers,cntAgentNotification, "Подписан")
+    Rel_Up(cmpAgentManagementUsers,cntAgentNotification, "Подписан")
+    Rel_Up(cmpAgentManagementUsers,cntAgentMonitorUsers, "Подписан")
 
     Rel_Up(extAgentNotificationFeeding,cmpAgentNotification, "Публикует значимые события автоматизации кормления")
-    
     Rel_Up(extAgentNotificationEquipMonitoring,cmpAgentNotification, "Публикует значимые события мониторинга оборудования")
-    
     Rel_Up(extAgentNotificationPigsState,cmpAgentNotification, "Публикует значимые события о состоянии животных")
-    
     Rel_Up(extAgentNotificationPigsBehaviour,cmpAgentNotification, "Публикует значимые события о поведении животных")
-    
+    Rel_Up(extAgentNotificationPing,cmpAgentNotification, "Публикует значимые события о состоянии связи с центром")
     Rel_Up(cmpAgentNotification,cntAgentNotification, "Подписан")
+    Rel_Up(cntAgentNotification,userAll,"Оповещает")
+
     'Присмотр за животными
     System(backPigsState, "Присмотр за животными","")
     Container_Boundary(backPigsState, "") {
@@ -97,6 +122,10 @@ Container_Boundary(backFarm1, "") {
     Rel_Up(extPigsStateAdapters,cmpPigsBehaviourData, "Публикует")
     Rel(cmpPigsBehaviourData,cntAgentPigsBehaviour, "Подписан")
     Rel(cmpPigsStateData,cntAgentPigsState, "Подписан")
+
+    Rel(userOnDuty,cntAgentPigsBehaviour,"Использует")
+    Rel(userOnDuty,cntAgentPigsState,"Использует")
+    Rel(userVet,cntAgentPigsState,"Использует")
 
     'Снабжение кормом
     System(backSupply, "Снабжение кормом","")
@@ -132,6 +161,8 @@ Container_Boundary(backFarm1, "") {
     Rel_Up(cmpAgentSupplyFeedingSize,cntAgentSupplyForecast,"Подписан")
     Rel_Up(extSupplyFeeding,cmpAgentSupplyFeedingSize,"Публикует")
 
+    Rel(userSupply,cntAgentSupplyState,"Использует")
+
     'Кормление животных
     System(backPigs, "Кормление животных","")
     Container_Boundary(backPigs, "") {
@@ -166,6 +197,8 @@ Container_Boundary(backFarm1, "") {
     Rel_Up(extPigsAdapters,cmpPigsFeedingData, "Публикует")
     Rel(cmpPigsFeedingData,cntAgentPigsFeeding, "Подписан")
 
+    Rel(userOnDuty,cntAgentPigsFeeding,"Использует")
+
     'Учет полевого оборудования
     System(backEquipment, "Учет полевого оборудования","")
     Container_Boundary(backEquipment, "") {
@@ -196,6 +229,9 @@ Container_Boundary(backFarm1, "") {
     Rel_Up(cmpEquipStandartData2,cntEquipMonitoring, "Подписан")
     Rel_Up(extEquipmentAdapters,cmpEquipStandartData2,"Публикует")
 
+    Rel(userMech,cntEquipMonitoring,"Использует")
+    Rel(userMech,cntEquipMap,"Использует")
+
     'Взаимодействие с полевым оборудованием
     System(backEquipmentUsing, "Взаимодействие с полевым оборудованием","")
     Container_Boundary(backEquipmentUsing, "") {
@@ -222,6 +258,7 @@ Container_Boundary(backFarm1, "") {
         Container(cntAgentEquipmentAdapter, "Сервисы-адаптеры устройств", "", "Перводчик со стандартных для PigSystem сообщений и команд к специфическим для производителя устройства и обратно")
 
         Container(cntAgentEdgeGateway, "IOT Шлюз", "", "Транслирует обмен сообщений с Edge-устройствами в локальный брокер сообщений") 
+        Container(cntAgentIIServer, "Серверный ИИ-агент", "", "Анализирует видеопоток и инициироует сообщения о зарегистрированных событиях") 
     } 
     
     Rel_Down(cntAgentEquipmentAdapter,cmpEquipStandardDataEquipment, "Публикует")
@@ -243,11 +280,24 @@ Container_Boundary(backFarm1, "") {
     Rel_Up(extEquipmentUsingEquipMap,cmpEquipType2, "Публикует")    
     Rel_Up(cmpEquipType2,cntAgentEquipmentAdapter, "Подписан")
 
+    Rel_Down(cntAgentIIServer,cmpEquipSpecificData, "Публикует")
     Rel_Down(cntAgentEdgeGateway,cmpEquipSpecificData, "Публикует")
     Rel(cmpEquipSpecificCmd,cntAgentEdgeGateway, "Подписан")
-}
 
-'Lay_Right(cntAgentBrokerEquipment,cntAgentBrokerEquipmentUsing)
-'Lay_Right(cntAgentBrokerEquipmentUsing,cntAgentManagementBroker)
+Lay_Right(cntAgentBrokerPigs,cntAgentBrokerPigsState)     
+Lay_Right(cntAgentBrokerPigsState,cntAgentBrokerSupply)
+Lay_Right(cntAgentBrokerSupply,cntAgentBrokerEquipment)
+Lay_Right(cntAgentBrokerEquipment,cntAgentBrokerEquipmentUsing)
+Lay_Right(cntAgentBrokerEquipmentUsing,cntIntegrityBroker)
+Lay_Right(cntIntegrityBroker,cntAgentManagementBroker)
 
+Lay_Right(backPigs,backPigsState)     
+Lay_Right(backPigsState,backSupply)
+Lay_Right(backSupply,backEquipment)
+Lay_Right(backEquipment,backEquipmentUsing)
+Lay_Right(backEquipmentUsing,backIntegrity)
+Lay_Right(backIntegrity,backManagement)
+
+'backPigs backPigsState backSupply backEquipment backEquipmentUsing backIntegrity backManagement
+'cntAgentBrokerPigs cntAgentBrokerPigsState cntAgentBrokerSupply cntAgentBrokerEquipment cntAgentBrokerEquipmentUsing cntIntegrityBroker cntAgentManagementBroker 
 @enduml
