@@ -84,9 +84,9 @@ Rel_Up(cntAgentNotification, appAgentUsing, "Оповещения")
 'center broker
 Rel(cntCenterUsers, cntIdP, "Синхронизованный список аккаунтов, их настроек и доступов")
 Rel(cntCenterUsers, cntCenterBroker, "Публикует изменения\nв настройках пользователей")
-Rel_Up(cntCenterBroker, cntCenterStore, "Все сообщения")
-Rel_Up(cntCenterBroker, cntCenterIntegrating, "Настраиваемый\nсписок сообщений")
-Rel(cntCenterStore, cntCenterDb, "Все сообщения")
+Rel_Up(cntCenterBroker, cntCenterStore, "Все\nсообщения")
+Rel_Up(cntCenterBroker, cntCenterIntegrating, "Настраиваемый\nсписок\nсообщений")
+Rel(cntCenterStore, cntCenterDb, "Все\nсообщения")
 
 'center-local
 Rel_Up(cntAgentSync, cntCenterBroker, "Транслирует сообщения\nСигналит о наличии связи")
