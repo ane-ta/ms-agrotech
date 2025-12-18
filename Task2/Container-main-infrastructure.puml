@@ -8,10 +8,14 @@ title Диаграмма контейнеров инфраструктуры с�
 System_Ext(appAgentUsing, "Пользовательский интерфейс оперативного управления фермой", "Mобильное или Web приложение для использования PigSystem")
 System_Ext(sysIntegrating, "Цифровая платформа AgroTech", "Обрабатывает интересующие метрики")
 
+Person(userDir, "Руководство", "Принимает решения по управлению хозяйством")
+
 Person(userSupply, "Снабжение", "Обеспечивает запас корма")
 Person(userOnDuty, "Дежурный", "Исполняет протоколы дежурства на конкретной ферме")
 Person(userVet, "Ветеринар", "Следит за здоровьем животных на фермах")
 Person(userMech, "Инженер/Механик", "Следит за состоянием оборудования на фермах")
+
+Rel(userDir, sysIntegrating, "Использует")
 
 Rel(userSupply, appAgentUsing, "Использует")
 Rel(userOnDuty, appAgentUsing, "Использует")
@@ -41,7 +45,7 @@ Container_Boundary(backFarm1, "") {
 
     System(sysAgentManagement, "","Учет полевого оборудования\nКормление животных\nСнабжение кормом\nПрисмотр за животными")
     Container_Boundary(sysAgentManagement, "") {
-        Container(cntAgentManagement, "Сервисы локального управления фермой", "", "") 
+        Container(cntAgentManagement, "Сервисы операционного управления фермой", "", "") 
     }
 
     Container(cntAgentEdgeGateway, "IOT Шлюз", "", "Транслирует обмен сообщений с Edge-устройствами в локальный брокер сообщений") 
@@ -53,28 +57,42 @@ Container_Boundary(backFarm1, "") {
 
     Container(cntAgentNotification, "Сервис оповещения пользователей", "", "Управляет оповещениями пользователей")
     Container(cntAgentUsers, "Сервис мониторинга аккаунтов пользователей", "", "Поддерживает актуальный список аккаунтов, их настроек и доступов")
+ 
+    Container(cntAgentVideo, "Сервис сбора видеофрагментов", "", "Сохраняет видеофрагменты зарегистрированных событий")
+    ContainerDb(cntAgentFileDb, "Хранилище файлов", "S3", "Хранит видеофрагменты зарегистрированных событий")
  }
-
-Lay_Right(cntAgentIIAgent,cntAgentEdgeGateway)
-'cntAgentNotification cntAgentIIAgent cntAgentEdgeGateway
-'Lay_Right(cntCenterBroker,cntAgentSync)
-Lay_Right(cntAgentEdgeAdapter,cntAgentIIAgent)
-'Lay_Right(sysAgentManagement,cntAgentNotification)
-Lay_Right(cntAgentManagement,cntAgentNotification)
 
 'farm territory
 System(backFarm0, "Территория фермы","Edge-устройства автоматизации")
 Container_Boundary(backFarm0, "") {
 
-    System_Ext(cntCameraGRPC, "Видеокамера", "Поддерживает самый высокопроизводительный стандарт трансляции видеопотока\nИмеет ИК подсветку")
-    System_Ext(cntCameraRTSP, "Видеокамера",  "Поддерживает самый распространенный стандарт трансляции видеопотока\nИмеет ИК подсветку")
+    System_Ext(cntCameraGRPC, "Видеокамера gRPC", "Поддерживает самый высокопроизводительный стандарт трансляции видеопотока\nИмеет ИК подсветку")
+    System_Ext(cntCameraRTSP, "Видеокамера RTSP",  "Поддерживает самый распространенный стандарт трансляции видеопотока\nИмеет ИК подсветку")
     System_Ext(cntCameraII, "Видеокамера c ИИ агентом", "Позволяет установить ИИ-модель и анализировать видеопоток прямо на устройстве\n")
 
     Container(cntCameraIIAgent, "ИИ агент", "SDK производителя", "Специфический для каждого производителя агент интеграции сторонней ИИ-модели")
 
-    System_Ext(cntWater, "Авто-поилка", "") 
-    System_Ext(cntFeeding, "Авто-кормушка", "") 
+    System_Ext(cntWater, "Авто-поилки", "") 
+    System_Ext(cntFeeding, "Авто-кормушки", "") 
  }
+
+Lay_Down(backCenter, backFarm1)
+Lay_Down(backFarm1, backFarm0)
+
+Lay_Right(backCenter, backFarm1)
+Lay_Right(backFarm1, backFarm0)
+
+Lay_Right(cntAgentSync,cntAgentManagement)
+Lay_Right(cntAgentManagement, cntAgentUsers)
+Lay_Right(cntAgentUsers, cntAgentNotification)
+
+Lay_Down(cntAgentSync, cntAgentVideo)
+
+Lay_Right(cntAgentIIAgent,cntAgentEdgeGateway)
+Lay_Right(cntAgentEdgeAdapter,cntAgentIIAgent)
+Lay_Right(cntAgentManagement,cntAgentNotification)
+Lay_Right(cntAgentVideo,cntAgentIIAgent)
+
 ' external
 Rel(appAgentUsing, cntAgentAPIGateway, "Использует функции системы в зависимости от прав доступа пользователей")
 Rel(appAgentUsing, cntIdP, "Аутентифицируется и получает JWT-токен доступа.")
@@ -106,6 +124,13 @@ BiRel_Up(cntAgentEdgeAdapter, cntAgentBroker, "Команды\nСообщени�
 Rel_Up(cntAgentBroker, cntAgentNotification, "Сообщения")
 Rel_Up(cntAgentBroker, cntAgentUsers, "Сообщения")
 Rel(cntAgentAPIGateway, cntAgentUsers, "Использует для валидации доступа")
+
+Rel(cntAgentVideo, cntAgentBroker, "Сообщения")
+Rel(cntAgentVideo, cntAgentIIAgent, "Собирает\nвидеофрагменты")
+Rel(cntAgentVideo, cntCameraII, "Собирает\nвидеофрагменты")
+
+Rel_Up(cntAgentVideo, cntAgentFileDb, "Использует")
+Rel(cntAgentSync, cntAgentFileDb, "Использует")
 
 'local edge broker
 BiRel_Up(cntAgentEdgeBroker, cntAgentEdgeGateway, "Команды\nСообщения\nMQTT")
