@@ -33,9 +33,9 @@ Container_Boundary(sysCloud, ""){
 
 System(sysFarm, "Территория ферм", "")
 Container_Boundary(sysFarm, ""){
-    Container(cntEdgeDevices, "IOT-устройства", "Поилки, кормушки")
-    Container(cntEdgeIOTCameras, "IOT Видеокамеры", "Видеокамеры + ИИ на борту")
-    Container(cntEdgeCameras, "Не IOT Видеокамеры", "Видеокамеры без ИИ")
+    Container(cntEdgeDevices, "IOT-устройства", "", "Поилки, кормушки")
+    Container(cntEdgeIOTCameras, "IOT Видеокамеры", "", "Видеокамеры + ИИ на борту")
+    Container(cntEdgeCameras, "Не IOT Видеокамеры", "", "Видеокамеры без ИИ")
 }
 'using systems
 Rel_Down(userDir, sysAgroTech, "Просматривает статистику и аналитику по деятельности ферм")
@@ -50,6 +50,7 @@ Rel_Up(sysCenter, sysAgroTech, "Публикует настраиваемые м
 
 'internal
 Rel(sysCenter, cntCloudServices, "Использует по максимуму")
+Rel_Right(cmpAPIGateway, cmpUsersManagement, "Использует")
 
 'slave
 BiRel(cmpIOTGateway, cntEdgeDevices, "Подписан на данные\nПубликует команды")
