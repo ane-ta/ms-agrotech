@@ -1,0 +1,78 @@
+@startuml
+title Диаграмма системы АгроТех Х PigSystem
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+Person(userDir, "Руководство", "Принимает решения по управлению хозяйством")
+Person(userOnDuty, "Дежурный", "Исполняет протоколы дежурства на конкретной ферме")
+Person(userVet, "Ветеринар", "Следит за здоровьем животных на фермах")
+Person(userMech, "Инженер/Механик", "Следит за состоянием оборудования на фермах")
+Person(userSupply, "Снабжение", "Обеспечивает запас корма")
+
+System_Ext(sysAgroTech, "Агро Тех Цифровая платформа")
+
+System_Ext(appUsing, "Пользовательский интерфейс", "Mобильное или Web приложение для использования PigSystem")
+Lay_Right(sysAgroTech, appUsing)
+
+System_Ext(sysCloud, "Облачный хостинг", "")
+Container_Boundary(sysCloud, ""){
+    
+    System(cntCloudServices, "Облачная инфраструктура", "")
+    Container_Boundary(cntCloudServices, "Облачные сервисы"){
+        Container_Ext(cmpIOTGateway, "IOT Gateway")
+        Container_Ext(cmpAPIGateway, "API Gateway")
+        Container_Ext(cmpUsersManagement, "Сервис аутентификации-авторизации")
+        Container_Ext(cmpVideo, "Сервис видеорегистрации")
+        Container_Ext(cmpCloudServicesOther, "Другие сервисы")
+    }
+
+    System(sysCenter, " Ядро PigSystem", "")
+    Container_Boundary(sysCenter,""){
+        Container(cntManagementServices, "Сервисы централизованного управления фермами")
+    }
+}
+
+System(sysFarm, "Территория ферм", "")
+Container_Boundary(sysFarm, ""){
+    Container(cntEdgeDevices, "IOT-устройства", "", "Поилки, кормушки")
+    Container(cntEdgeIOTCameras, "IOT Видеокамеры", "", "Видеокамеры + ИИ на борту")
+    Container(cntEdgeCameras, "Не IOT Видеокамеры", "", "Видеокамеры без ИИ")
+
+    System(sysEdgeAgent, "Сервер-агент PigSystem", "")
+    Container_Boundary(sysEdgeAgent, ""){
+        Container(cntAgentVideo, "Сервер видеорегистрации", "")
+        Container(cntAgentIOTGateway, "IOT Gateway", "", "Локальный шлюз для IOT устройств")
+    }
+}
+Lay_Down(sysCenter, cntCloudServices)
+Lay_Down(sysCloud, sysFarm)
+Lay_Down(cntCloudServices, sysFarm)
+
+'using systems
+Rel_Down(userDir, sysAgroTech, "Просматривает статистику и аналитику по деятельности ферм")
+Rel_Down(userOnDuty, appUsing, "Следит за кормлением животных и их поведением")
+Rel_Down(userVet, appUsing, "Следит за поголовьем и здоровьем животных")
+Rel_Down(userMech, appUsing, "Следит за состоянием оборудования")
+Rel_Down(userSupply, appUsing, "Ведет учет запасов корма")
+
+Rel_Down(appUsing, cmpAPIGateway, "Использует функции системы в зависимости от прав доступа пользователя")
+
+Rel_Up(sysCenter, sysAgroTech, "Публикует настраиваемые метрики от всех ферм")
+
+'internal
+Rel(sysCenter, cntCloudServices, "Использует по максимуму")
+Rel(cmpAPIGateway, sysCenter, "Маршрутизирует")
+Rel_Right(cmpAPIGateway, cmpUsersManagement, "Использует для\nаутентификации")
+
+
+'slave
+Rel_Up(cntAgentIOTGateway, cmpIOTGateway, "Подписан на данные\nПубликует команды")
+
+BiRel(cntAgentIOTGateway, cntEdgeDevices, "Подписан на данные\nПубликует команды")
+BiRel(cntAgentIOTGateway, cntEdgeIOTCameras, "Подписан на данные\nПубликует команды")
+
+Rel(cntAgentVideo, cmpVideo, "Передает\nвидеопоток и видеофрагменты")
+
+Rel(cntAgentVideo, cntEdgeCameras, "Извлекает\nвидеопоток")
+Rel(cntAgentVideo, cntEdgeIOTCameras, "Извлекает\nвидеофрагменты")
+
+@enduml
