@@ -11,7 +11,7 @@ Person(userSupply, "Снабжение", "Обеспечивает запас к
 System_Ext(sysAgroTech, "Агро Тех Цифровая платформа")
 
 System_Ext(appUsing, "Пользовательский интерфейс", "Mобильное или Web приложение для использования PigSystem")
-Lay_Right(sysAgroTech, appUsing)
+Lay_Right(appUsing, sysAgroTech)
 
 System_Ext(sysCloud, "Облачный хостинг", "")
 Container_Boundary(sysCloud, ""){
@@ -27,7 +27,8 @@ Container_Boundary(sysCloud, ""){
 
     System(sysCenter, " Ядро PigSystem", "")
     Container_Boundary(sysCenter,""){
-        Container(cntManagementServices, "Сервисы централизованного управления фермами")
+        Container(cntCenterServices, "Сервисы поддержания целостности системы")
+        Container(cntManagementServices, "Сервисы операционного управления фермами")
     }
 }
 
@@ -41,6 +42,8 @@ Container_Boundary(sysFarm, ""){
     Container_Boundary(sysEdgeAgent, ""){
         Container(cntAgentVideo, "Сервер видеорегистрации", "")
         Container(cntAgentIOTGateway, "IOT Gateway", "", "Локальный шлюз для IOT устройств")
+        ContainerDb(cntAgentDb, "Локальное хранилище", "", "Хранит сообщения фермы")
+        ContainerDb(cntAgentFileDb, "Локальное файловое хранилище", "S3", "Хранит видеофрагменты зарегистрированных событий фермы")
     }
 }
 Lay_Down(sysCenter, cntCloudServices)
@@ -56,11 +59,11 @@ Rel_Down(userSupply, appUsing, "Ведет учет запасов корма")
 
 Rel_Down(appUsing, cmpAPIGateway, "Использует функции системы в зависимости от прав доступа пользователя")
 
-Rel_Up(sysCenter, sysAgroTech, "Публикует настраиваемые метрики от всех ферм")
+Rel_Up(cntCenterServices, sysAgroTech, "Публикует настраиваемые метрики от всех ферм")
 
 'internal
 Rel(sysCenter, cntCloudServices, "Использует по максимуму")
-Rel(cmpAPIGateway, sysCenter, "Маршрутизирует")
+Rel(cmpAPIGateway, cntManagementServices, "Маршрутизирует")
 Rel_Right(cmpAPIGateway, cmpUsersManagement, "Использует для\nаутентификации")
 
 
@@ -74,5 +77,8 @@ Rel(cntAgentVideo, cmpVideo, "Передает\nвидеопоток и виде
 
 Rel(cntAgentVideo, cntEdgeCameras, "Извлекает\nвидеопоток")
 Rel(cntAgentVideo, cntEdgeIOTCameras, "Извлекает\nвидеофрагменты")
+
+Rel_Right(cntAgentVideo, cntAgentFileDb, "Использует")
+Rel_Left(cntAgentIOTGateway, cntAgentDb, "Использует")
 
 @enduml
