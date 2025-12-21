@@ -11,23 +11,25 @@ Person(userSupply, "Снабжение", "Обеспечивает запас к
 System_Ext(sysAgroTech, "Агро Тех Цифровая платформа")
 
 System_Ext(appUsing, "Пользовательский интерфейс", "Mобильное или Web приложение для использования PigSystem")
-Lay_Right(sysAgroTech, appUsing)
 
 System_Ext(sysCloud, "Облачный хостинг", "")
 Container_Boundary(sysCloud, ""){
     
     System(cntCloudServices, "Облачная инфраструктура", "")
     Container_Boundary(cntCloudServices, "Облачные сервисы"){
-        Container_Ext(cmpIOTGateway, "IOT Gateway")
-        Container_Ext(cmpAPIGateway, "API Gateway")
         Container_Ext(cmpUsersManagement, "Сервис аутентификации-авторизации")
+        Container_Ext(cmpAPIGateway, "API Gateway")
+        Container_Ext(cmpIOTGateway, "IOT Gateway")
         Container_Ext(cmpVideo, "Сервис видеорегистрации")
-        Container_Ext(cmpCloudServicesOther, "Другие сервисы")
+        Container_Ext(cmpCloudBroker, "Сервис шины сообщений")
+'        Container_Ext(cmpCloudServicesOther, "Другие сервисы")
     }
 
     System(sysCenter, " Ядро PigSystem", "")
     Container_Boundary(sysCenter,""){
-        Container(cntManagementServices, "Сервисы централизованного управления фермами")
+        Container(cntManagementServices, "Сервисы операционного управления фермами")
+        Container(cntDeviceServices, "Сервисы взаимодействия с оборудованием")
+        Container(cntIntegrationService, "Сервис внешней интеграции")
     }
 }
 
@@ -37,6 +39,13 @@ Container_Boundary(sysFarm, ""){
     Container(cntEdgeIOTCameras, "IOT Видеокамеры", "", "Видеокамеры + ИИ на борту")
     Container(cntEdgeCameras, "Не IOT Видеокамеры", "", "Видеокамеры без ИИ")
 }
+'Laying
+Lay_Right(sysAgroTech, appUsing)
+Lay_Right(cmpUsersManagement, cmpAPIGateway)
+Lay_Right(cmpAPIGateway, cmpIOTGateway)
+Lay_Right(cmpIOTGateway, cmpCloudBroker)
+'Lay_Right(cmpCloudBroker, cmpCloudServicesOther)
+
 'using systems
 Rel_Down(userDir, sysAgroTech, "Просматривает статистику и аналитику по деятельности ферм")
 Rel_Down(userOnDuty, appUsing, "Следит за кормлением животных и их поведением")
@@ -45,37 +54,21 @@ Rel_Down(userMech, appUsing, "Следит за состоянием обору�
 Rel_Down(userSupply, appUsing, "Ведет учет запасов корма")
 
 Rel_Down(appUsing, cmpAPIGateway, "Использует функции системы в зависимости от прав доступа пользователя")
+Rel_Down(appUsing, cmpUsersManagement, "Аутентифицируется")
 
-Rel_Up(sysCenter, sysAgroTech, "Публикует настраиваемые метрики от всех ферм")
+Rel_Up(cntIntegrationService, sysAgroTech, "Публикует настраиваемые метрики от всех ферм")
+Rel(cmpAPIGateway, cntManagementServices, "Маршрутизирует")
 
 'internal
-Rel(sysCenter, cntCloudServices, "Использует по максимуму")
-Rel_Right(cmpAPIGateway, cmpUsersManagement, "Использует")
+Rel(cntManagementServices, cmpCloudBroker, "Взаимодействуют")
+Rel(cntIntegrationService, cmpCloudBroker, "Взаимодействует")
+Rel_Left(cmpAPIGateway, cmpUsersManagement, "Использует")
+Rel(cntDeviceServices, cmpCloudBroker, "Взаимодействует")
 
 'slave
 BiRel(cmpIOTGateway, cntEdgeDevices, "Подписан на данные\nПубликует команды")
 BiRel(cmpIOTGateway, cntEdgeIOTCameras, "Подписан на данные\nПубликует команды")
 Rel(cmpVideo, cntEdgeCameras, "Извлекает\nвидеопоток")
 Rel(cmpVideo, cntEdgeIOTCameras, "Извлекает\nвидеофрагменты")
-
-' System(sysCenter, "Центр", "")
-
-' System(sysFarm, "Территория фермы", "")
-' Container_Boundary(sysFarm, ""){
-'     Container(cntEdgeDevices, "IOT-устройства", "Видеокамеры, поилки, кормушки")
-' }
-
-' System(sysAgroTech, "Агро Тех Цифровая платформа")
-
-' System(sysCloud, "Облачное пространство", "")
-' Container_Boundary(sysCloud, ""){
-'     Container(cntCloudServices, "Облачные сервисы")
-
-' }
-
-' System(sysOnPremise, "Пространство ЦОД", "")
-' Container_Boundary(sysOnPremise, ""){
-
-' }
 
 @enduml
