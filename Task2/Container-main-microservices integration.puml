@@ -35,8 +35,7 @@ Person(userMech, "Инженер/Механик", "Следит за состо�
             Container(cntIntegritySync, "Сервис синхронизации сервера-агента", "", "Транслирует сообщения между центральной щиной и локальной шиной сообщений") 
         }
 
-        Container_Ext(extIntegrityNotification, "Сервис оповещения пользователей")
-
+        Container_Ext(extIntegrityNotification, "Сервис оповещения пользователей", "", "Взаимодействие с пользователями")
     }
 
     Rel_Up(cmpIntegrityCenter,cntIntegrityStore,"Подписан")
@@ -65,20 +64,21 @@ Person(userMech, "Инженер/Механик", "Следит за состо�
         
         System(backManagementFarm, "Ферма","")
         Container_Boundary(backManagementFarm, "") {
-            Container(cntAgentNotification, "Сервис оповещения", "", "Оповещает пользователей о важных событиях") 
             Container(cntAgentMonitorUsers, "Сервис мониторинга аккаунтов пользователя", "", "Предоставляет актуальный список пользователей и их настроек на ферме") 
         }
+        
+        Container(cntAgentNotification, "Сервис оповещения", "", "Оповещает пользователей о важных событиях") 
 
         Container(cntAgentManagementBroker, "Шина сообщений", "", "") {
             Component_Ext(cmpAgentNotification, "Оповещения\nпользователям")
             Component(cmpAgentManagementUsers, "Изменения в аккаунтах пользователей")
         }
 
-        Container_Ext(extAgentNotificationFeeding, "Сервис автоматизации кормления")
-        Container_Ext(extAgentNotificationEquipMonitoring, "Сервис мониторинга оборудовния")
-        Container_Ext(extAgentNotificationPigsBehaviour, "Сервис мониторинга поведения животных")
-        Container_Ext(extAgentNotificationPigsState, "Сервис мониторинга состояния животных")
-        Container_Ext(extAgentNotificationPing, "Сервис синхронизации сервера-агента")
+        Container_Ext(extAgentNotificationFeeding,"Сервис автоматизации кормления", "")
+        Container_Ext(extAgentNotificationEquipMonitoring, "Сервис мониторинга оборудовния","", "Учет полевого оборудования")
+        Container_Ext(extAgentNotificationPigsBehaviour,"Сервис мониторинга поведения животных", "", "Присмотр за животными")
+        Container_Ext(extAgentNotificationPigsState,"Сервис мониторинга состояния животных", "", "Присмотр за животными")
+        Container_Ext(extAgentNotificationPing,"Сервис синхронизации сервера-агента", "", "Поддержание целостности")
     }
 
     Rel(cntAgentManagementUsers,cmpAgentManagementUsers, "Публикует")
@@ -105,12 +105,18 @@ Person(userMech, "Инженер/Механик", "Следит за состо�
             Component(cmpPigsStateCount, "Текущее поголовье")
             Component_Ext(cmpPigsStateData, "Стандартизованные события\nо состоянии животных\nот оборудования")
             Component_Ext(cmpPigsBehaviourData, "Стандартизованные события\nо поведении животных\nот оборудования")
+            Component_Ext(cmpPigsStateFeedingEquipPlace, "События\nоб изменении списка устройств и их расположения")
         }
         
-        Container_Ext(extPigsStateNotification, "Сервис оповещения")
-        Container_Ext(extPigsStateAdapters, "Сервисы-адаптеры устройств")
-        Container_Ext(extPigsStateForecast, "Сервис прогнозирования запасов корма")
+        Container_Ext(extPigsStateNotification,"Сервис оповещения", "", "Взаимодействие с пользователями")
+        Container_Ext(extPigsStateAdapters, "Сервисы-адаптеры устройств","","Взаимодействие с оборудованием")
+        Container_Ext(extPigsStateForecast, "Сервис прогнозирования запасов корма","","Снабжение кормом")
+        Container_Ext(extPigsStateEquipPlace,"Сервис ведения полевой карты", "","Учет оборудования")
     }
+    Rel_Up(extPigsStateEquipPlace,cmpPigsStateFeedingEquipPlace,"Публикует")
+    Rel_Up(cmpPigsStateFeedingEquipPlace,cntAgentPigsBehaviour,"Подписан")
+    Rel_Up(cmpPigsStateFeedingEquipPlace,cntAgentPigsState,"Подписан")
+
     Rel(cntAgentPigsState,cmpPigsStateCount,"Публикует")
     Rel(cmpPigsStateCount,extPigsStateForecast,"Подписан")
 
@@ -142,9 +148,9 @@ Person(userMech, "Инженер/Механик", "Следит за состо�
             Component_Ext(cmpAgentSupplyPigsCount, "Текущее поголовье")
         }
 
-        Container_Ext(extSupplyNotification, "Сервис оповещения")
-        Container_Ext(extSupplyFeeding, "Сервис автоматизации кормления")
-        Container_Ext(extSupplyPigsState, "Сервис мониторинга состояния животных")
+        Container_Ext(extSupplyNotification, "Сервис оповещения","", "Взаимодействие с пользователями")
+        Container_Ext(extSupplyFeeding,"Сервис автоматизации кормления", "")
+        Container_Ext(extSupplyPigsState, "Сервис мониторинга состояния животных","","Присмотр за животными")
     }
     Rel(cntAgentSupplyForecast,cmpAgentSupplyForecastResponse,"Публикует")
     Rel_Up(cmpAgentSupplyForecastResponse,cntAgentSupplyState,"Подписан")
@@ -175,13 +181,18 @@ Person(userMech, "Инженер/Механик", "Следит за состо�
             Component(cmpPigsFeedingSettings, "Нормы кормления")
             Component(cmpPigsFeedingSpent, "Скормлено за день")
             Component_Ext(cmpPigsFeedingData, "Стандартизованные события\nавтоматизации кормления\nот оборудования")
+            Component_Ext(cmpPigsFeedingEquipPlace, "События\nоб изменении списка устройств и их расположения")
         }
+        Container_Ext(extPigsEquipPlace,"Сервис ведения полевой карты", "","Учет оборудования")
+        Container_Ext(extPigsNotification,"Сервис оповещения", "", "Взаимодействие с пользователями")
+        Container_Ext(extPigsAdapters,"Сервисы-адаптеры устройств", "","Взаимодейтсвие с оборудованием")
+        Container_Ext(extPigsForecast,"Сервис прогнозирования запасов корма", "", "Снабжение кормом")
+        Container_Ext(extPigsMonitor,"Сервис мониторинга запасов корма", "", "Снабжение кормом")
+    }
 
-        Container_Ext(extPigsNotification, "Сервис оповещения")
-        Container_Ext(extPigsAdapters, "Сервисы-адаптеры устройств")
-        Container_Ext(extPigsForecast, "Сервис прогнозирования запасов корма")
-        Container_Ext(extPigsMonitor, "Сервис мониторинга запасов корма")
-    }   
+    Rel_Up(extPigsEquipPlace,cmpPigsFeedingEquipPlace,"Публикует")
+    Rel_Up(cmpPigsFeedingEquipPlace,cntAgentPigsFeeding,"Подписан")
+
     Rel_Down(cntAgentPigsFeeding,cmpPigsFeedingNotification, "Публикует значимые события в автоматизированном кормлении")
     Rel_Down(cmpPigsFeedingNotification,extPigsNotification, "Подписан")
     
@@ -213,8 +224,12 @@ Person(userMech, "Инженер/Механик", "Следит за состо�
             Component(cmpEquipPlace, "События\nоб изменении списка устройств и их расположения")
             Component_Ext(cmpEquipStandartData2, "Стандартизованные технические события от оборудования")
         }
-        Container_Ext(extEquipMonitoringNotification, "Сервис оповещения")
-        Container_Ext(extEquipmentAdapters, "Сервисы-адаптеры устройств")
+        Container_Ext(extEquipMonitoringNotification, "Сервис оповещения", "", "Взаимодействие с пользователями")
+        Container_Ext(extEquipmentAdapters, "Сервисы-адаптеры устройств", "","Взаимодействие с оборудованием")
+
+        Container_Ext(extEquipmentPigState,"Сервис мониторинга состояния животных", "", "Присмотр за животными")
+        Container_Ext(extEquipmentPigBehaviour,"Сервис мониторинга поведения животных", "", "Присмотр за животными")
+        Container_Ext(extEquipmentFeeding,"Сервис автоматизации кормления", "")
     }
 
     Rel_Down(cntEquipMap,cmpEquipType, "Публикует")
@@ -232,15 +247,19 @@ Person(userMech, "Инженер/Механик", "Следит за состо�
     Rel(userMech,cntEquipMonitoring,"Использует")
     Rel(userMech,cntEquipMap,"Использует")
 
+    Rel_Down(cmpEquipPlace,extEquipmentPigState,"Подписан")
+    Rel_Down(cmpEquipPlace,extEquipmentPigBehaviour,"Подписан")
+    Rel_Down(cmpEquipPlace,extEquipmentFeeding,"Подписан")
+
     'Взаимодействие с полевым оборудованием
     System(backEquipmentUsing, "Взаимодействие с полевым оборудованием","")
     Container_Boundary(backEquipmentUsing, "") {
 
-        System_Ext(extEquipmentUsingEquipMap, "Сервис ведения полевой карты")
-        System_Ext(extEquipmentUsingFeeding, "Сервис автоматизации кормления")
-        System_Ext(extEquipmentUsingEquipMonitor, "Сервис мониторинга оборудования")
-        System_Ext(extEquipmentUsingPigState, "Сервис мониторинга состояния животных")
-        System_Ext(extEquipmentUsingPigSBehaviour, "Сервис мониторинга поведения животных")
+        Container_Ext(extEquipmentUsingEquipMap,"Сервис ведения полевой карты", "","Учет оборудования")
+        Container_Ext(extEquipmentUsingFeeding,"Сервис автоматизации кормления", "")
+        Container_Ext(extEquipmentUsingEquipMonitor,"Сервис мониторинга оборудования", "","Учет оборудования")
+        Container_Ext(extEquipmentUsingPigState,"Сервис мониторинга состояния животных", "", "Присмотр за животными")
+        Container_Ext(extEquipmentUsingPigSBehaviour, "Сервис мониторинга поведения животных","", "Присмотр за животными")
 
         Container(cntAgentBrokerEquipmentUsing, "Шина сообщений", "", "") {
 
@@ -256,6 +275,7 @@ Person(userMech, "Инженер/Механик", "Следит за состо�
             Component_Ext(cmpEquipType2, "События\nоб изменении списка устройств и их типов")
         }
         Container(cntAgentEquipmentAdapter, "Сервисы-адаптеры устройств", "", "Перводчик со стандартных для PigSystem сообщений и команд к специфическим для производителя устройства и обратно")
+        Container(cntAgentEquipmentVideo, "Сервис сбора видеофрагментов", "", "Сохраняет видеофрагменты зарегистрированных событий в локальное хранилище")
 
         Container(cntAgentEdgeGateway, "IOT Шлюз", "", "Транслирует обмен сообщений с Edge-устройствами в локальный брокер сообщений") 
         Container(cntAgentIIServer, "Серверный ИИ-агент", "", "Анализирует видеопоток и инициироует сообщения о зарегистрированных событиях") 
@@ -265,6 +285,10 @@ Person(userMech, "Инженер/Механик", "Следит за состо�
     Rel_Down(cntAgentEquipmentAdapter,cmpEquipStandardDataFeeding, "Публикует")
     Rel_Down(cntAgentEquipmentAdapter,cmpEquipStandardDataPigsState, "Публикует")
     Rel_Down(cntAgentEquipmentAdapter,cmpEquipStandardDataPigsBehaviour, "Публикует")
+    
+    Rel_Up(cmpEquipStandardDataPigsState,cntAgentEquipmentVideo, "Подписан")
+    Rel_Up(cmpEquipStandardDataPigsBehaviour,cntAgentEquipmentVideo, "Подписан")
+    
     
     Rel_Down(cmpEquipStandardDataEquipment,extEquipmentUsingEquipMonitor, "Подписан")
     Rel(cmpEquipStandardDataFeeding,extEquipmentUsingFeeding, "Подписан")
