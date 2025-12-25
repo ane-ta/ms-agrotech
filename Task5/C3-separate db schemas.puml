@@ -1,0 +1,70 @@
+@startuml
+title Диаграмма компонентов контейнера "Сервис мониторинга поведения животных" мультитенантной системы АгроТех Х PigSystem
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+System_Ext(appUsing, "Клиентское\nприложение", "")
+
+Container_Ext(cntAgentBrokerPigsState, "Шина сообщений", "", "") {
+    Component(cmpPigsStateNotification, "Оповещения\nпользователям")
+    Component(cmpPigsBehaviour, "События\nв поведении животных")
+    Component_Ext(cmpPigsBehaviourData, "Стандартизованные события\nв поведении животных\nот оборудования")
+    Component_Ext(cmpEquipmentMap, "События\nоб изменении списка устройств и их расположения")
+}
+Lay_Right(cmpPigsBehaviourData, cmpPigsStateNotification)
+Lay_Right(cntAgentBrokerPigsState, appUsing)
+
+Container(PigsBehaviourService, "PigsBehaviourService") {
+    Component( cmpBrokerFacade, "Event bus Facade", "", "Взаимодействует с шиной сообщений, инициируя новый DI Scope для каждого сообщения и действуя в его рамках")
+    Component( cmpTenantService, "Tenant Context Service", "", "Хранит TenantID в рамках DI Scope\n(Scope Lifetime)")
+    
+    Component( cmpBehaviourEventsProcessor, "Behaviour Events Processor", "", "Анализирует цепочки событий и генерирует инциденты.")
+    Component( cmpEquipmentShadow, "Device Map Events Processor", "", "Поддерживает актуальной карту фермы и расположение оборудования по ней")
+
+
+    Component( cmpApiMiddleware, "HTTP Request Middleware", "", "")
+    Component( cmpPigsBehaviourController, "Pigs Behaviour Controller", "", "Позволяет пользователю узнать о поведении животных по ферме.")
+
+    Component( cmpServiceLayer, "Service Layer", "", "")
+
+    Component( cmpRepositories, "Repository Layer", "", "Доступ к данным")
+    Component( cmpEventsProcessor, "EventsProcessor", "", "Инкапсулирует обработчики событий")
+}
+Lay_Right(cmpBrokerFacade, cmpPigsBehaviourController)
+
+ContainerDb(Db, "Database", "PostgreSQL", "Stores data about behaviour. Общая БД, разные схемы для TenantId")
+
+Lay_Right(cmpBehaviourEventsProcessor, cmpEquipmentShadow)
+'external
+Rel_Down(cmpPigsBehaviourData,cmpBrokerFacade,"Подписан")
+Rel_Up(cmpBrokerFacade, cmpPigsBehaviour, "Публикует")
+Rel_Up(cmpBrokerFacade, cmpPigsStateNotification, "Публикует")
+Rel_Down(cmpEquipmentMap, cmpBrokerFacade, "Подписан")
+
+Rel_Down(appUsing, cmpApiMiddleware, "Запрашивает")
+
+'internal
+Rel(cmpBrokerFacade, cmpEventsProcessor, "Использует для запуска обработки события в DI scope для TenantId")
+Rel(cmpBrokerFacade, cmpTenantService, "Устанавливает TenantID\nпри инициализации DI Scope")
+Rel(cmpRepositories, cmpTenantService, "Использует для получения TenantId")
+
+
+'behaviour
+Rel_Down(cmpEventsProcessor, cmpBehaviourEventsProcessor, "Запускает\nдля обработки события о поведении животных")
+Rel_Down(cmpBehaviourEventsProcessor, cmpRepositories, "Reads/Writes data")
+Rel(cmpBehaviourEventsProcessor, cmpBrokerFacade, "Инициирует\nсобытия\nи Команды\nуправления")
+
+'equipment shadow
+Rel_Down(cmpEventsProcessor, cmpEquipmentShadow, "Запускает\nдля обработки события об изменении списка устройств и их расположения")
+Rel(cmpEquipmentShadow,cmpRepositories,"Writes data")
+
+'api
+Rel(cmpApiMiddleware,cmpPigsBehaviourController,"Предшествует")
+Rel(cmpPigsBehaviourController,cmpServiceLayer,"Использует")
+Rel(cmpServiceLayer,cmpRepositories,"Reads/Writes data")
+Rel(cmpApiMiddleware,cmpTenantService,"Устанавливает TenantID для потока запроса")
+
+'repositories
+Rel_Down(cmpRepositories, Db, "Reads/Writes data")
+
+@enduml
