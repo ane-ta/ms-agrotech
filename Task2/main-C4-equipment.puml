@@ -1,0 +1,79 @@
+@startuml
+title Диаграмма оборудования системы АгроТех Х PigSystem
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+System(backCenter, "Центральный сервер"," ")
+Container_Boundary(backCenter, "") {
+
+}
+
+System(backFarm0, "Территория фермы","")
+Container_Boundary(backFarm0, "") {
+    
+    System(backAgentInternetCluster, "Резервирование связи с центральным сервером", "Отказоустойчивость 99,95%")
+    Container_Boundary(backAgentInternetCluster,""){
+        Container(cntAgentInternet, "Multi-WAN роутер1", "", "несколько провайдеров 4G/LTE для выхода в интернет")
+        Container(cntAgentInternet2, "Multi-WAN роутер2", "", "несколько провайдеров 4G/LTE для выхода в интернет")
+    }
+
+    System(backAgentCluster, "Кластер сервер-агентов", "Управление полевым оборудованием\nСинхронизация с центральным сервером\nОтказоустойчивость 99,95%\n                                                                                                                                                                                ")
+    Container_Boundary(backAgentCluster,""){
+
+        Container(backAgent1, "Сервер-агент1","", ""){        
+            Component(cntAgentGPU1, "Мощный или сверх-мощный GPU", "Ориентировочно до 25 видеокамер")
+        }
+
+        Container(backAgent2, "Сервер-агент2","", "") {
+            Component(cntAgentGPU2, "Мощный или сверх-мощный GPU", "Ориентировочно до 25 видеокамер")
+        }
+    }
+ 
+    System(backFarmWifi, "Промышленная Wi-Fi Mesh-сеть","Решает проблему нестабильного Wi-Fi\nМобильное приложение дежурного\nвсегда на связи")
+    Container_Boundary(backFarmWifi, "") {
+        Container(cntWiFiMesh, "Промышленные точки Wi-Fi доступа", "", "") 
+        Container(cntWiFiSwitch, "Промышленные PoE-коммутаторы", "", "") 
+    }
+ 
+    System(backFarmVideo, "Сеть видеонаблюдения","Решает проблему покрытия камерами всей площади")
+    Container_Boundary(backFarmVideo, "") {
+        Container(cntCameraGRPC, "Видеокамеры", "gRPC", "Поддерживает самый высокопроизводительный стандарт трансляции видеопотока\n\nИмеет ИК подсветку\n\nОграниченное кол-во")
+        Container(cntCameraRTSP, "Видеокамеры", "RTSP/ONVIF", "Поддерживает самый распространенный стандарт трансляции видеопотока\n\nИмеет ИК подсветку\n\nОграниченное кол-во")
+        Container(cntCameraII, "Видеокамеры c ИИ агентом", "MQTT", "Позволяет установить ИИ-модель и анализировать видеопоток прямо на устройстве\n\nИмеет ИК подсветку\n\nНеограниченное кол-во")
+    }
+
+    System(backFarmFeeding, "Сеть автоматизации кормления","")
+    Container_Boundary(backFarmFeeding, "") {
+
+        Container(cntAgentLoRaWAN, "Шлюз LoRaWAN", "", "Радиоприемник с функцией маршрутизатора")
+
+        System(backFarmFeedingEquip, "Edge-устройства кормления"," Не требуют пропускной способности видео")
+        Container_Boundary(backFarmFeedingEquip, "") {
+            Container(cntWater, "Авто-поилки", "", "") 
+            Container(cntFeeding, "Авто-кормушки", "", "") 
+        }
+    }
+ }
+
+Lay_Right(backFarmFeeding,backFarmVideo)
+Lay_Right(backFarmVideo,backFarmWifi)
+
+Lay_Down(backAgentInternetCluster,backAgentCluster)
+
+BiRel(backCenter,cntAgentInternet, "4G/LTE")
+BiRel(backCenter,cntAgentInternet2, "4G/LTE")
+BiRel_Down(cntAgentInternet,backAgentCluster, "Ethernet")
+BiRel_Down(cntAgentInternet2,backAgentCluster, "Ethernet")
+
+Rel(backAgentCluster, cntCameraII, "Собирает\nсобытия\nвидеоаналитики\nEthernet")
+Rel(backAgentCluster, cntCameraRTSP, "Собирает\nвидеопоток\nGigabit\nEthernet")
+Rel(backAgentCluster, cntCameraGRPC, "Собирает\nвидеопоток\nGigabit\nEthernet")
+
+Rel(cntAgentLoRaWAN, cntWater, "LoRaWAN")
+Rel(cntAgentLoRaWAN, cntFeeding, "LoRaWAN")
+Rel(backAgentCluster, cntAgentLoRaWAN, "Принимает события\n Посылает команды\nEthernet")
+
+Rel(backAgentCluster, cntWiFiSwitch, "Подключен\nEthernet")
+Rel(cntWiFiSwitch, cntWiFiMesh, "Подключен\nEthernet\nPoE")
+
+@enduml

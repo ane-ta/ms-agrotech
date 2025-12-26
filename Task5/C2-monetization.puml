@@ -1,0 +1,64 @@
+@startuml
+title Диаграмма контейнеров системы монетизации АгроТех Х PigSystem
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+'external items
+
+System_Ext(sysBankSystem, "Банковская система", "Система для обработки безналичных платежей")
+System_Ext(sysErpSystem, "1С Бухгалтерия", "Электронный бухгалтерский учет")
+System_Ext(sysEdoSystem, "Оператор ЭДО", "Система электронного документооборота")
+
+'center
+System(backCenter, "Центральный сервер"," ")
+Container_Boundary(backCenter, "") {
+    System(sysCenterMonetization, "Центр:Монетизация")
+    Container_Boundary(sysCenterMonetization, ""){
+        Container(cntCenterBilling, "Сервис биллинга", "", "Управление подписками, тарифами, счетами и платежами")
+        Container(cntCenterUsageStat, "Сервис счетчика биллинга", "", "Считает поток использования ресурсов тенантами")
+
+        Container(cntCenterTenants, "Сервис тенантов", "", "Управляет\nучетными данными\nтенантов")
+        Container(cntEdoGateway, "ЭДО Шлюз", "", "Обеспечивает доставку счетов")
+        Container(cntErpGateway, "ERP Шлюз", "", "Посылает счета в электронную бухгалтерию")
+        Container(cntBankGateway, "Сервис подтверждения безналичных переводов", "", "Регистрирует поступление оплат")
+    }
+
+    Container(cntCenterBroker, "Центральный брокер сообщений", "Kafka", "Среда обмена сообщениями Центра и ферм\n                                                                                                                                                                                                                                                                                                                                                                                                         ") 
+ }  
+ 
+'farm agent
+
+
+'Laying
+    
+    'center blocks
+
+    'geo areas
+    
+    'tenants
+    Lay_Right(sysEdoSystem, sysErpSystem)
+    Lay_Right(sysErpSystem, sysBankSystem)
+    
+'Relations
+    'external
+    Rel_Up(cntErpGateway, sysErpSystem, "Создает/Читает документы\nSOAP/HTTP")
+    Rel_Up(cntEdoGateway, sysEdoSystem, "Отправляет счета и акты\nДиадок / СБИС API")
+    Rel_Up(cntBankGateway, sysBankSystem, "Загружает/Сверяет выписки\nSWIFT/API")
+
+    'center broker
+    'center-local
+
+    'local broker
+    'local broker integrity
+
+    'center broker users
+    
+    'tenants
+    Rel(cntCenterTenants, cntCenterBroker, "Публикует данные о тенантах")
+    Rel(cntCenterBilling, cntCenterBroker,"Подписан на агрегированные данные об использовании ресурсов.\n\nПубликует счета для выставления юр лицам")
+    Rel(cntCenterUsageStat, cntCenterBroker,"Подписан на данные об использовании ресурсов.\n\nПубликует агрегированные данные об использовании ресурсов")
+    Rel(cntEdoGateway, cntCenterBroker, "Подписан на счета для выставления юрлицам. Публикует статус счетов в ЭДО")
+    Rel(cntErpGateway, cntCenterBroker, "Подписан на счета для выставления юрлицам. Публикует статус счетов в ERP")
+    Rel(cntBankGateway, cntCenterBroker, "Подписан на счета для выставления юрлицам. Публикует факт поступления платежа")
+
+@enduml

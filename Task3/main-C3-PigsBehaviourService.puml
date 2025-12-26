@@ -1,0 +1,58 @@
+@startuml
+title Диаграмма компонентов контейнера "Сервис мониторинга поведения животных" системы АгроТех Х PigSystem
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+System_Ext(appUsing, "Клиентское\nприложение", "")
+
+Container_Ext(cntAgentBrokerPigsState, "Шина сообщений", "", "") {
+    Component(cmpPigsStateNotification, "Оповещения\nпользователям")
+    Component(cmpPigsBehaviour, "События\nв поведении животных")
+    Component_Ext(cmpPigsBehaviourData, "Стандартизованные события\nв поведении животных\nот оборудования")
+    Component_Ext(cmpEquipmentMap, "События\nоб изменении списка устройств и их расположения")
+}
+Lay_Right(cmpPigsBehaviourData, cmpPigsStateNotification)
+Lay_Right(cntAgentBrokerPigsState, appUsing)
+
+Container(PigsBehaviourService, "PigsBehaviourService") {
+    Component( cmpBrokerFacade, "Event bus Facade", "", "Взаимодействует с шиной сообщений")
+    
+    Component( cmpEventsProcessor, "Behaviour Events Processor", "", "Анализирует цепочки событий и генерирует инциденты.")
+
+    Component( cmpPigsBehaviourController, "Pigs Behaviour Controller", "", "Позволяет пользователю узнать о поведении животных по ферме.")
+
+    Component( cmpServiceLayer, "Service Layer", "", "")
+    Component( cmpEquipmentShadow, "Device Map Shadow", "", "Поддерживает актуальной карту фермы и расположение оборудования по ней")
+
+    Component( cmpRepositories, "Repository Layer", "", "Доступ к данным")
+}
+Lay_Right(cmpBrokerFacade, cmpPigsBehaviourController)
+
+ContainerDb(Db, "Database", "PostgreSQL", "Stores data about behaviour")
+
+'external
+Rel_Down(cmpPigsBehaviourData,cmpBrokerFacade,"Подписан")
+Rel_Up(cmpBrokerFacade, cmpPigsBehaviour, "Публикует")
+Rel_Up(cmpBrokerFacade, cmpPigsStateNotification, "Публикует")
+Rel_Down(cmpEquipmentMap, cmpBrokerFacade, "Подписан")
+
+Rel_Down(appUsing, cmpPigsBehaviourController, "Запрашивает")
+
+'internal
+Rel_Up(cmpEventsProcessor, cmpBrokerFacade, "Подписывается\nна события\nповедения")
+Rel(cmpEventsProcessor, cmpBrokerFacade, "Инициирует\nсобытия\nи Команды\nуправления")
+Rel_Down(cmpEventsProcessor, cmpRepositories, "Reads/Writes data")
+
+'equipment shadow
+Rel_Up(cmpEquipmentShadow,cmpBrokerFacade,"Подписывается на события об изменении списка устройств и их расположения")
+Rel(cmpEquipmentShadow,cmpRepositories,"Writes data")
+
+'api
+Rel(cmpPigsBehaviourController,cmpServiceLayer,"Использует")
+Rel(cmpServiceLayer,cmpRepositories,"Reads/Writes data")
+Rel(cmpServiceLayer,cmpEquipmentShadow,"Использует")
+
+'repositories
+Rel_Down(cmpRepositories, Db, "Reads/Writes data")
+
+@enduml

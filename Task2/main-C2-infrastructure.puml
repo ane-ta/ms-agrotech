@@ -1,0 +1,182 @@
+@startuml
+title Диаграмма контейнеров инфраструктуры системы АгроТех Х PigSystem
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+'external items
+System_Ext(appAgentUsing, "Пользовательский интерфейс оперативного управления фермой", "Mобильное или Web приложение для использования PigSystem")
+System_Ext(sysIntegrating, "Цифровая платформа AgroTech", "Обрабатывает интересующие метрики")
+
+Person(userDir, "Руководство", "Принимает решения по управлению хозяйством")
+
+Person(userSupply, "Снабжение", "Обеспечивает запас корма")
+Person(userOnDuty, "Дежурный", "Исполняет протоколы дежурства на конкретной ферме")
+Person(userVet, "Ветеринар", "Следит за здоровьем животных на фермах")
+Person(userMech, "Инженер/Механик", "Следит за состоянием оборудования на фермах")
+
+Rel(userDir, sysIntegrating, "Использует")
+
+Rel(userSupply, appAgentUsing, "Использует")
+Rel(userOnDuty, appAgentUsing, "Использует")
+Rel(userVet, appAgentUsing, "Использует")
+Rel(userMech, appAgentUsing, "Использует")
+
+'center
+System(backCenter, "Центральный сервер"," ")
+Container_Boundary(backCenter, "") {
+
+    System(sysCenterUsers, "Центр: Взаимодействие с пользователями")
+    Container_Boundary(sysCenterUsers, ""){
+        Container(cntIdP, "Identity Provider", "Keycloak", "Управляет аккаунтами пользователей и их правами доступа\n\nПроводит через аутентификацию")
+        Container(cntCenterUsers, "Сервис управления аккаунтами пользователей", "", "Хранит информацию о настройках аккаунтов")
+    }
+    
+    System(sysCenterIntegrity, "Центр: Поддержание целостности")
+    Container_Boundary(sysCenterIntegrity, ""){
+        Container(cntCenterStore, "Сервис сохранения истории", "", "Сохранение истории событий всей системы")
+        Container(cntCenterIntegrating, "Сервис интеграции", "", "Транслирует настраиваемые метрики во внешнюю систему")
+        ContainerDb(cntCenterDb, "Центральное хранилище", "S3", "Хранит данные всей системы")
+
+        Container(cntCenterSync, "Сервис приема синхронизации агентов", "", "Принимает сообщения с агентов ферм и транслирует сообщения центра") 
+    }
+    Container(cntCenterBroker, "Центральный брокер сообщений", "Kafka", "Среда обмена сообщениями Центра и ферм\n                                                                                                                                                                                                     ") 
+ }  
+'farm agent
+System(backFarm1, "Сервер-агент на ферме","")
+Container_Boundary(backFarm1, "") {
+
+    System(sysAgentIntegrity, "","Сервер-Агент: Поддержание целостности")
+    Container_Boundary(sysAgentIntegrity, "") {
+
+        ContainerDb(cntAgentDb, "Локальное хранилище", "", "Хранит структурированные данные для синхронизации с сервером после разрывов связи")
+        ContainerDb(cntAgentFileDb, "Файловое хранилище", "S3", "Хранит видеофрагменты зарегистрированных событий")
+        Container(cntAgentSync, "Сервис синхронизации с центром", "", "Гарантирует передачу сообщений в центр даже при разрывах связи")
+    }
+    Container(cntAgentBroker, "Локальный брокер сообщений", "RabbitMQ Streams", "Среда обмена сообщениями микросервисов фермы\n                                                                                                                                                                                                     ") 
+
+    System(sysAgentDevices, "","Сервер-Агент: Взаимодействие с полевым оборудованием")
+    Container_Boundary(sysAgentDevices, "") {
+
+        Container(cntAgentEdgeGateway, "IOT Шлюз", "", "Транслирует обмен сообщений с Edge-устройствами в локальный брокер сообщений") 
+        Container(cntAgentIIAgent, "Серверный ИИ-агент", "", "Анализирует видеопоток и инициирует сообщения о зарегистрированных событиях\nНужен  мощный GPU\nДо 30 камер")
+        Container(cntAgentEdgeAdapter, "Сервис-адаптер Edge-устройств", "", "Переводчик со стандартных для PigSystem сообщений и команд к специфическим для производителя устройств и обратно") 
+        Container(cntAgentEdgeBroker, "IOT брокер сообщений", "КRabbitMQ", "Среда обмена сообщениями с Edge-устройствами") 
+
+        Container(cntAgentVideo, "Сервис сбора видеофрагментов", "", "Сохраняет видеофрагменты зарегистрированных событий")
+    }
+
+    System(sysAgentManagement, "Сервер-Агент: Операционное управление фермой","Учет полевого оборудования\nКормление животных\nСнабжение кормом\nПрисмотр за животными")
+    Container_Boundary(sysAgentManagement, "") {
+        Container(cntAgentManagement, "Сервисы операционного управления фермой", "", "") 
+    }
+
+    System(sysAgentUsers, "","Сервер-Агент: Взаимодействие с пользователями")
+    Container_Boundary(sysAgentUsers, "") {
+
+        Container(cntAgentAPIGateway, "Локальный API Gateway", "Kong Gateway", "Валидирует токены доступа\nМаршрутизирует запросы")
+
+        Container(cntAgentNotification, "Сервис оповещения пользователей", "", "Управляет оповещениями пользователей")
+        Container(cntAgentUsers, "Сервис мониторинга аккаунтов пользователей", "", "Поддерживает актуальный список аккаунтов, их настроек и доступов")
+    }
+
+ }
+
+'farm territory
+System(backFarm0, "Территория фермы","Edge-устройства автоматизации")
+Container_Boundary(backFarm0, "") {
+
+    System_Ext(cntCameraGRPC, "Видеокамера gRPC", "Поддерживает самый высокопроизводительный стандарт трансляции видеопотока\nИмеет ИК подсветку")
+    System_Ext(cntCameraRTSP, "Видеокамера RTSP",  "Поддерживает самый распространенный стандарт трансляции видеопотока\nИмеет ИК подсветку")
+    System_Ext(cntCameraII, "Видеокамера c ИИ агентом", "Позволяет установить ИИ-модель и анализировать видеопоток прямо на устройстве\n")
+
+    Container(cntCameraIIAgent, "ИИ агент", "SDK производителя", "Специфический для каждого производителя агент интеграции сторонней ИИ-модели")
+
+    System_Ext(cntWater, "Авто-поилки", "") 
+    System_Ext(cntFeeding, "Авто-кормушки", "") 
+ }
+
+'Laying
+'    Lay_Right(sysIntegrating, appAgentUsing)
+    Lay_Right(userDir, userOnDuty)
+    
+    'center blocks
+    Lay_Right(sysCenterIntegrity, sysCenterUsers)
+    Lay_Down(sysCenterUsers, cntCenterBroker)
+
+    'geo areas
+    Lay_Down(backCenter, backFarm1)
+    Lay_Down(backFarm1, backFarm0)
+
+    'agent blocks
+    Lay_Down(sysAgentIntegrity, sysAgentDevices)
+    Lay_Right(sysAgentManagement, sysAgentUsers)
+    Lay_Right(cntAgentManagement, cntAgentUsers)
+
+    'agent management
+    Lay_Right(cntAgentManagement,cntAgentUsers)
+    Lay_Right(cntAgentUsers, cntAgentNotification)
+    Lay_Left(cntAgentNotification,cntAgentUsers)
+
+    'agent device management
+    Lay_Right(cntAgentVideo,cntAgentIIAgent)
+    Lay_Right(cntAgentIIAgent,cntAgentEdgeGateway)
+    Lay_Right(cntAgentEdgeGateway,cntAgentEdgeAdapter)
+
+'Relations
+    ' external
+    Rel(appAgentUsing, cntAgentAPIGateway, "Использует функции системы в зависимости от прав доступа пользователей")
+    Rel(appAgentUsing, cntIdP, "Аутентифицируется и получает JWT-токен доступа.")
+    Rel_Up(cntCenterIntegrating, sysIntegrating, "Публикует настраиваемый список метрик")
+    Rel_Up(cntAgentNotification, appAgentUsing, "Оповещения")
+
+    'center broker
+    Rel_Right(cntCenterUsers, cntIdP, "Синхронизованный список аккаунтов, их настроек и доступов")
+    Rel(cntCenterUsers, cntCenterBroker, "Публикует изменения\nв настройках пользователей")
+    Rel_Down(cntCenterBroker, cntCenterStore, "Все\nсообщения")
+    Rel_Down(cntCenterBroker, cntCenterIntegrating, "Настраиваемый\nсписок\nсообщений")
+    Rel(cntCenterStore, cntCenterDb, "Все\nсообщения")
+    Rel_Down(cntCenterSync, cntCenterDb, "Все\nвидеофрагменты")
+    BiRel_Up(cntCenterSync, cntCenterBroker, "Транслирует\nсообщения")
+
+    'center-local
+    Rel_Up(cntAgentSync, cntCenterSync, "Пакетно транслирует сообщения\nСигналит о наличии связи\ngRPC stream")
+ 
+    'local broker
+    'local broker integrity
+    Rel_Right(cntAgentSync, cntAgentDb, "использует для буферизации данных")
+    BiRel_Up(cntAgentBroker, cntAgentSync, "Сообщения для синхронизации с центром")
+    Rel(cntAgentSync, cntAgentFileDb, "Читает\nвидеофрагменты")
+
+    'local broker management
+    BiRel_Up(cntAgentBroker, cntAgentManagement, "Команды\nСообщения")
+
+    'local broker device management
+    Rel(cntAgentAPIGateway, cntAgentManagement, "Перенаправляет\nзапросы")
+    Rel(cntAgentAPIGateway, cntAgentNotification, "Перенаправляет\nзапросы")
+
+    BiRel_Up(cntAgentEdgeGateway, cntAgentBroker, "Команды\nСообщения")
+    Rel_Up(cntAgentIIAgent, cntAgentBroker, "Сообщения")
+    BiRel_Up(cntAgentEdgeAdapter, cntAgentBroker, "Команды\nСообщения")
+
+    Rel_Up(cntAgentBroker, cntAgentVideo, "Сообщения")
+    Rel(cntAgentVideo, cntCameraII, "Собирает\nвидеофрагменты\nREST API производителя")
+
+    'local broker users
+    Rel_Up(cntAgentBroker, cntAgentNotification, "Сообщения")
+    Rel_Up(cntAgentBroker, cntAgentUsers, "Сообщения")
+    Rel(cntAgentAPIGateway, cntAgentUsers, "Использует для валидации доступа")
+
+    'local edge broker
+    BiRel_Up(cntAgentEdgeBroker, cntAgentEdgeGateway, "Команды\nСообщения\nMQTT")
+    BiRel_Up(cntCameraII, cntAgentEdgeBroker, "Команды\nСообщения\nMQTT")
+
+    BiRel_Up(cntWater, cntAgentEdgeBroker, "Команды\nСообщения\nMQTT")
+
+    BiRel_Up(cntFeeding, cntAgentEdgeBroker, "Команды\nСообщения\nMQTT")
+
+    ' farm territory
+    Rel(cntCameraII, cntCameraIIAgent, "использует для распознавания событий")
+    Rel(cntAgentIIAgent, cntCameraGRPC, "Собирает видеопоток\ngRPC\nGigabit Ethernet")
+    Rel(cntAgentIIAgent, cntCameraRTSP, "Собирает видеопоток\nRTSP\nGigabit Ethernet")
+
+@enduml

@@ -1,0 +1,61 @@
+@startuml
+title DDD Карта взаимодействия контекстов автоматизации PigSystem
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+    Person(userEngineer, "Инженер")
+    Person(userOnDuty, "Дежурный")
+    Person(userVet, "Ветеринар")
+
+       
+        System(dEquipmentKnowledge, "Поддомен: Учет полевого оборудования", "")
+        System_Boundary(dEquipmentKnowledge, ""){                
+            System( sysEquipmentList, "Контекст: Ведение полевой карты", "Поддерживать список полевого оборудования системы, его расположение на территории, его схему интеграции")    
+            System( sysEquipmentState, "Контекст: Мониторинг состояния полевого оборудования", "Отслеживать техническое состояние и сигнал связи")    
+        }
+
+        System(dEquipmentIntegration, "Поддомен: Взаимодействие с полевым оборудованием", "")
+        System_Boundary(dEquipmentIntegration, ""){                
+            
+            System( sysEdgeData, "Контекст: Схемы интеграции", "Приведение сообщений и команд устройства к стандартизованному списку, который понимает PigSystem")    
+            
+            System( sysEdgeGateway, "Контекст: Интеграционный мост", "Сообщает канал общения полевого оборудования и канал общения PigSystem")    
+        }        
+
+    System(dPigs, "Домен: Уход за животными", " ")
+    System_Boundary(dPigs, ""){ 
+
+        System(dPigState, "Поддомен: Присмотр за животными", " ")
+        System_Boundary(dPigState, ""){ 
+            System( sysPigsBehaviour, "Контекст: Мониторинг поведения животных", "Признаки беспокойства, гибель, задавливания поросят итд")    
+            System( sysPigsState, "Контекст: Мониторинг состояния животных", "Пересчет особей, здоровых и с признаками болезни и т д")
+        }
+
+        System(dPigFeeding, "Поддомен: Кормление животных", " ")
+        System_Boundary(dPigFeeding, ""){ 
+            System( sysFeedingEquipment, "Контекст: Автоматизация кормления", "Работа с поилками и кормушками. График кормления.")    
+        
+        }
+    }
+
+    Rel(sysEdgeData, sysEdgeGateway,"Ловит сообщения специфические для модели edge-устройства")
+    Rel(sysEquipmentState, sysEdgeData,"Собирает стандартизованные сообщения о техническом состоянии устройств")
+    Rel(sysPigsBehaviour, sysEdgeData,"Собирает стандартизованные сообщения о событиях видеомониторинга")
+    Rel(sysPigsState, sysEdgeData,"Собирает стандартизованные сообщения о событиях видеомониторинга")
+    Rel(sysFeedingEquipment, sysEdgeData,"Собирает стандартизованные сообщения об операционных событиях и состоянии авто-поилок и авто-кормушек")
+
+    Rel(userOnDuty, sysFeedingEquipment, "Использует")
+    Rel(userOnDuty, sysPigsBehaviour, "Использует")
+    Rel(userOnDuty, sysPigsState, "Использует")
+    Rel(userEngineer, sysEquipmentState, "Использует")
+    Rel(userVet, sysPigsState, "Использует")
+
+    Rel(sysEdgeData,sysEquipmentList,"узнает тип и местоположение устройства")
+
+'    Rel(sysEquipmentState,sysEquipmentList,"узнает тип и местоположение устройства")
+'    Rel(sysPigsBehaviour,sysEquipmentList,"узнает тип и местоположение устройства")
+'    Rel(sysPigsState,sysEquipmentList,"узнает тип и местоположение устройства")
+'    Rel(sysFeedingEquipment,sysEquipmentList,"узнает тип и местоположение устройства")
+
+
+@enduml

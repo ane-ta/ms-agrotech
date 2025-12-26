@@ -1,0 +1,142 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+    title Component: Event Bus Facade - Full Code Diagram (C# / .NET 9)
+
+    Package "Core.Events" {
+
+        class RawEvent <<Record>>{
+            +string DeviceId
+            +DateTime Timestamp
+            +string EventType
+            +JsonElement Data
+        }
+        'note right : JsonElement позволяет\nотложить десериализацию данных\nдо конкретного Handler-а.
+    }
+
+    Package "Infrastructure.Serializers"{
+        
+        interface IEventSerializer{
+            +RawEvent Deserialize( byte[] data)
+            +byte[ ] Serialize<T>( T obj)
+        }
+
+        class SystemTextJsonSerializer {
+            +RawEvent Deserialize( byte[] data)
+        }
+    }
+
+    Package "Infrastructure.Drivers"{
+        interface IMessageBroker{
+            +Task ConnectAsync(CancellationToken ct)
+            +IAsyncEnumerable<byte[]> SubscribeRawAsync(CancellationToken ct)
+            +Task PublishAsync<T>(string topic, T message, CancellationToken ct)
+        }
+
+        class KafkaBrokerDriver{
+            - IConsumer<string, byte[]> _consumer
+            - IProducer<string, byte[]> _producer
+            - KafkaConfig _config
+            + IAsyncEnumerable<byte[]> SubscribeRawAsync(CancellationToken ct)
+        }
+        note bottom of KafkaBrokerDriver
+            Реализует обмен сообщениями через Kafka
+        end note
+
+        class RabbitMQBrokerDriver{
+            - IConnection _connection
+            - IChannel _channel
+            + IAsyncEnumerable<byte[]> SubscribeRawAsync(CancellationToken ct)
+        }
+        note bottom of RabbitMQBrokerDriver
+            Реализует обмен сообщениями через RabbitMQ
+        end note
+
+        class GrpcDriver{
+            -- Infrastructure --
+            - _channel: GrpcChannel
+            - _client: PigsEventsClient
+            - _currentStream: AsyncServerStreamingCall
+            
+            -- State & Logic --
+            - _options: GrpcDriverOptions
+            - _logger: ILogger
+            - _mapper: IEventMapper
+
+            + IAsyncEnumerable<byte[]> SubscribeRawAsync(CancellationToken ct)
+            - ReconnectWithRetry(CancellationToken ct): Task
+            - MapToRawEvent(protoItem: EventResponse): RawEvent
+        }
+        note bottom of GrpcDriver
+            Реализует обмен сообщениями через gRPC
+        end note
+    }
+
+    Package "Integration.Facadе" {
+        class Facade <<BackgroundService>>{
+            -IMessageBroker _broker
+            -IEventSerializer _serializer
+            -IEnumerable<IEventHandler> _handlers
+
+            #Task ExecuteAsync(CancellationToken ct)
+            +Task SendCommandAsync<T>(T command, CancellationToken ct)
+        }
+        note right of Facade
+            Центральный оркестратор: 
+            читает поток из брокера и 
+            уведомляет обработчики событий.
+        end note
+    }
+
+    Package "Integration.Handlers" {
+        interface IEventHandler {
+            +Task HandleAsync(RawEvent ev)
+        }
+
+        class BehaviourEventsHandler {
+            - IBehaviourEventsProcessor _processor
+            + Task HandleAsync(RawEvent ev)
+        }
+        note bottom of BehaviourEventsHandler
+            Обработчик событий поведения животных.
+            Интегрирует компонент Behaviour Events Processor
+        end note
+
+        class DeviceMapEventsHandler {
+            - IDeviceMapShadowManager _shadow
+            + Task HandleAsync(RawEvent ev)
+        }
+        note bottom of DeviceMapEventsHandler
+            Обработчик событий карты оборудования.
+            Интегрирует компонент Device Map Shadow
+        end note
+    }
+
+    'Relations
+    IMessageBroker <|-- KafkaBrokerDriver
+    IMessageBroker <|-- RabbitMQBrokerDriver
+    IMessageBroker <|-- GrpcDriver
+
+    IEventSerializer <|-- SystemTextJsonSerializer
+
+    Facade o-- IMessageBroker : "DI strategy"
+    Facade o-- IEventSerializer : "DI strategy"
+    Facade "1" *-- "many" IEventHandler : "Distributes\nRawEvents to"
+
+    IEventHandler <|-- BehaviourEventsHandler
+    IEventHandler <|-- DeviceMapEventsHandler
+
+    IEventSerializer ..> RawEvent : "creates"
+    Facade ..> RawEvent : "manages"
+    IEventHandler ..> RawEvent : "consumes"
+
+@enduml
+
+'Class "fromLabel" Arrow "toLabel" Class : "arrowLabel"
+
+'ClassA <-- ClassB	Наследование
+'Interface <|-- Class	Реализация
+'ClassA *-- ClassB	Композиция	B не может существовать без A (жесткая связь)
+'ClassA o-- ClassB	Агрегация	A содержит B, но B может жить отдельно (ссылка через DI)
+'ClassA --> ClassB	Ассоциация	А знает о Б и вызывает его методы
+'ClassA ..> ClassB	Зависимость	А использует Б кратковременно (как аргумент в методе)

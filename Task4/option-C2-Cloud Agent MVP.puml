@@ -1,0 +1,94 @@
+@startuml
+title Диаграмма системы АгроТех Х PigSystem
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+Person(userDir, "Руководство", "Принимает решения по управлению хозяйством")
+Person(userOnDuty, "Дежурный", "Исполняет протоколы дежурства на конкретной ферме")
+Person(userVet, "Ветеринар", "Следит за здоровьем животных на фермах")
+Person(userMech, "Инженер/Механик", "Следит за состоянием оборудования на фермах")
+Person(userSupply, "Снабжение", "Обеспечивает запас корма")
+
+System_Ext(sysAgroTech, "Агро Тех Цифровая платформа")
+
+System_Ext(appUsing, "Пользовательский интерфейс", "Mобильное или Web приложение для использования PigSystem")
+Lay_Right(appUsing, sysAgroTech)
+
+System_Ext(sysCloud, "Облачный хостинг", "")
+Container_Boundary(sysCloud, ""){
+    
+    System(cntCloudServices, "Облачная инфраструктура", "")
+    Container_Boundary(cntCloudServices, "Облачные сервисы"){
+        Container_Ext(cmpIOTGateway, "IOT Gateway")
+        Container_Ext(cmpAPIGateway, "API Gateway")
+        Container_Ext(cmpUsersManagement, "Сервис аутентификации-авторизации")
+        Container_Ext(cmpVideo, "Сервис видеорегистрации")
+        Container_Ext(cmpCloudBroker, "Сервис шины сообщений")
+'        Container_Ext(cmpCloudServicesOther, "Другие сервисы")
+    }
+
+    System(sysCenter, " Ядро PigSystem", "")
+    Container_Boundary(sysCenter,""){
+        Container(cntCenterServices, "Сервисы поддержания целостности системы")
+        Container(cntDeviceServices, "Сервисы взаимодействия с оборудованием")
+        Container(cntManagementServices, "Сервисы операционного управления фермами")
+    }
+}
+
+System(sysFarm, "Территория ферм", "")
+Container_Boundary(sysFarm, ""){
+    Container(cntEdgeDevices, "IOT-устройства", "", "Поилки, кормушки")
+    Container(cntEdgeIOTCameras, "IOT Видеокамеры", "", "Видеокамеры + ИИ на борту")
+    Container(cntEdgeCameras, "Не IOT Видеокамеры", "", "Видеокамеры без ИИ")
+
+    System(sysEdgeAgent, "Сервер-агент PigSystem", "")
+    Container_Boundary(sysEdgeAgent, ""){
+        Container(cntAgentVideo, "Сервер видеорегистрации + ИИ", "")
+        Container(cntAgentIOTGateway, "IOT Gateway", "", "Локальный шлюз для IOT устройств")
+        ContainerDb(cntAgentDb, "Локальное хранилище", "", "Хранит сообщения фермы")
+        ContainerDb(cntAgentFileDb, "Локальное файловое хранилище", "S3", "Хранит видеофрагменты зарегистрированных событий фермы")
+    }
+}
+Lay_Down(sysCenter, sysCloud)
+Lay_Down(sysCloud, sysFarm)
+Lay_Down(cntCenterServices, cntCloudServices)
+Lay_Down(cntCloudServices, sysFarm)
+
+Lay_Right(cmpUsersManagement, cmpAPIGateway)
+Lay_Right(cmpAPIGateway, cmpIOTGateway)
+Lay_Right(cmpIOTGateway, cmpCloudBroker)
+
+'using systems
+Rel_Down(userDir, sysAgroTech, "Просматривает статистику и аналитику по деятельности ферм")
+Rel_Down(userOnDuty, appUsing, "Следит за кормлением животных и их поведением")
+Rel_Down(userVet, appUsing, "Следит за поголовьем и здоровьем животных")
+Rel_Down(userMech, appUsing, "Следит за состоянием оборудования")
+Rel_Down(userSupply, appUsing, "Ведет учет запасов корма")
+
+Rel_Down(appUsing, cmpAPIGateway, "Использует функции системы в зависимости от прав доступа пользователя")
+
+Rel_Up(cntCenterServices, sysAgroTech, "Публикует настраиваемые метрики от всех ферм")
+
+'internal
+'Rel(sysCenter, cntCloudServices, "Использует по максимуму")
+Rel(cmpAPIGateway, cntManagementServices, "Маршрутизирует")
+Rel_Left(cmpAPIGateway, cmpUsersManagement, "Использует для\nаутентификации")
+Rel(cntDeviceServices, cmpCloudBroker, "Взаимодействует")
+Rel(cntCenterServices, cmpCloudBroker, "Взаимодействует")
+Rel(cntManagementServices, cmpCloudBroker, "Взаимодействует")
+
+
+'slave
+Rel_Up(cntAgentIOTGateway, cmpIOTGateway, "Подписан на данные\nПубликует команды")
+
+BiRel(cntAgentIOTGateway, cntEdgeDevices, "Подписан на данные\nПубликует команды")
+BiRel(cntAgentIOTGateway, cntEdgeIOTCameras, "Подписан на данные\nПубликует команды")
+
+Rel(cntAgentVideo, cmpVideo, "Передает\nвидеопоток и видеофрагменты")
+
+Rel(cntAgentVideo, cntEdgeCameras, "Извлекает\nвидеопоток")
+Rel(cntAgentVideo, cntEdgeIOTCameras, "Извлекает\nвидеофрагменты")
+
+Rel_Right(cntAgentVideo, cntAgentFileDb, "Использует")
+Rel_Left(cntAgentIOTGateway, cntAgentDb, "Использует")
+
+@enduml
