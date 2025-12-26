@@ -1,5 +1,5 @@
 @startuml
-title Диаграмма контейнеров инфраструктуры мультитенантной системы АгроТех Х PigSystem
+title Диаграмма контейнеров изоляции данных тенантов системы АгроТех Х PigSystem
 
 '!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
 !include ../C4_Component.puml
@@ -34,7 +34,10 @@ Container_Boundary(backCenter, "") {
         Container(cntCenterAPIGateway, "API Gateway", "Kong Gateway", "Валидирует токены доступа\nМаршрутизирует запросы")
 
         Container(cntCenterNotification, "Сервис оповещения пользователей", "", "Управляет оповещениями пользователей\n\nМультитенантен, использует контекст тенанта")
+    }
 
+    System(sysCenterMonetization,"Центр: Монетизация")
+    Container_Boundary(sysCenterMonetization,""){
         Container(cntCenterTenants, "Сервис тенантов", "", "Управляет\nучетными данными\nтенантов")
     }
     
@@ -77,9 +80,9 @@ Container_Boundary(backFarm1, "") {
     'geo areas
     Lay_Down(backCenter, backFarm1)
 
-    Lay_Right(cntCenterTenants, cntCenterNotification)
+    Lay_Right(sysAgentManagement, sysCenterMonetization)
+
     Lay_Right(cntIdP, cntCenterUsers)
-    Lay_Right(cntCenterUsers, cntCenterTenants)
 'Relations
     ' external
     Rel(appAgentUsing, cntCenterAPIGateway, "Использует функции системы в зависимости от прав доступа пользователей")
