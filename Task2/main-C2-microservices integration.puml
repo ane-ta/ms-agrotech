@@ -1,8 +1,7 @@
 @startuml
 title Диаграмма микросервисов и их взаимодействия в системе АгроТех Х PigSystem
 
-'!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
-!include ../C4_Component.puml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
 
 Person(userAll, "Все", "Дежурный, Ветеринар, Инженер/механик, Снабжение")
 
